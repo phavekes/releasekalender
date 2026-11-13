@@ -50,7 +50,6 @@ class View
     <nav class="nav">
       <?php if ($user): ?>
         <a href="index.php" class="<?= $active === 'overview' ? 'active' : '' ?>">Overview</a>
-        <a href="new.php" class="<?= $active === 'new' ? 'active' : '' ?>">New release</a>
       <?php else: ?>
         <a href="public.php" class="<?= $active === 'public' ? 'active' : '' ?>">Public Releases</a>
       <?php endif; ?>
