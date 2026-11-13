@@ -45,7 +45,9 @@ class View
     </nav>
     <div class="user">
       <button type="button" id="theme-toggle" class="btn btn-ghost theme-toggle"
-              aria-label="Switch color theme" title="Color theme: click to cycle Auto / Light / Dark">Auto</button>
+              aria-label="Switch color theme" title="Color theme: click to cycle Auto / Light / Dark">
+        <?= View::themeIcon() ?>
+      </button>
       <?php if ($user): ?>
         <span class="user-name"><?= e(View::displayName($user)) ?></span>
         <a class="btn btn-ghost" href="logout.php">Log out</a>
@@ -90,5 +92,15 @@ class View
     {
         return '<svg viewBox="0 0 16 16" width="14" height="16" fill="none" stroke="currentColor"'
             . ' stroke-width="2" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 5"/></svg>';
+    }
+
+    public static function themeIcon(): string
+    {
+        return '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor"'
+            . ' stroke-width="1.5" aria-hidden="true">'
+            . '<circle cx="8" cy="8" r="4"/>'
+            . '<path d="M8 2v2M8 12v2M2 8h2M12 8h2"/>'
+            . '<path d="m5.9 5.9 1.4 1.4M9.7 9.7 11.1 11.1M5.9 10.1 7.3 8.7M9.7 5.9 11.1 7.3"/>'
+            . '</svg>';
     }
 }

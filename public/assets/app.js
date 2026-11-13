@@ -7,11 +7,16 @@
   var btn = document.getElementById('theme-toggle');
   var media = window.matchMedia('(prefers-color-scheme: dark)');
 
+  var ICON_AUTO = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="4"/><path d="M8 2v2M8 12v2M2 8h2M12 8h2"/><path d="m5.9 5.9 1.4 1.4M9.7 9.7 11.1 11.1M5.9 10.1 7.3 8.7M9.7 5.9 11.1 7.3"/></svg>';
+  var ICON_LIGHT = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="3.5"/><path d="M8 2v1M8 14v1M2 8h1M14 8h1m-4.2-4.2 1.4 1.4M6.8 6.8 5.4 8.2M10.6 10.6 9.2 9.2M10.6 5.4 9.2 6.8"/></svg>';
+  var ICON_DARK = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 12.75a4.5 4.5 0 0 0 4.84-5.25A8.02 8.02 0 0 1 8 2a8 8 0 0 1-8 8 8 8 0 0 1 8 8c.75 0 1.48-.12 2.16-.36a4.5 4.5 0 0 0 4.84-5.25"/></svg>';
+
   function apply() {
     var mode = localStorage.getItem('theme') || 'auto';
     root.classList.toggle('dark', mode === 'dark' || (mode === 'auto' && media.matches));
     if (btn) {
-      btn.textContent = labels[mode];
+      var icons = { auto: ICON_AUTO, light: ICON_LIGHT, dark: ICON_DARK };
+      btn.innerHTML = icons[mode] || ICON_AUTO;
       btn.title = 'Color theme: ' + labels[mode] + ' (click to change)';
     }
   }
