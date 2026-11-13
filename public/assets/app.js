@@ -152,6 +152,57 @@
   if (appSelect && appSelect.value) load();
 })();
 
+/* Auto-save when checkboxes are toggled on release detail page. */
+(function () {
+  var form = document.querySelector('.release-form');
+  if (!form) return;
+
+  // Create flash message element if it doesn't exist
+  var flash = document.querySelector('.flash');
+  if (!flash) {
+    flash = document.createElement('p');
+    flash.className = 'flash';
+    flash.style.display = 'none';
+    var pageHead = document.querySelector('.page-head');
+    if (pageHead) {
+      pageHead.appendChild(flash);
+    } else {
+      form.insertBefore(flash, form.firstChild);
+    }
+  }
+
+  form.addEventListener('change', function (event) {
+    var target = event.target;
+    // Only auto-save for installed checkboxes
+    if (target.name && target.name.match(/items\[\d+\]\[installed\]/)) {
+      event.preventDefault();
+      // Collect form data
+      var formData = new FormData(form);
+      
+      // Submit via AJAX
+      fetch(form.action, {
+        method: 'POST',
+        body: formData
+      })
+        .then(function (response) {
+          if (response.ok) {
+            // Show a flash message
+            flash.textContent = 'Changes saved.';
+            flash.style.display = 'block';
+            setTimeout(function () {
+              flash.style.display = 'none';
+            }, 3000);
+          } else {
+            console.error('Failed to save changes');
+          }
+        })
+        .catch(function (error) {
+          console.error('Error:', error);
+        });
+    }
+  });
+})();
+
 /* Planned-date items: rows can be added and removed. The server saves the
    items in list order; within a release names must be unique. */
 (function () {
