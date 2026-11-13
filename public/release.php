@@ -23,7 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $releases = new Releases(Database::pdoStatic(), $config);
-$id = (int)($_GET['id'] ?? 0);
+// For POST requests, use the ID from the form; otherwise use GET parameter
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = (int)($_POST['id'] ?? 0);
+} else {
+    $id = (int)($_GET['id'] ?? 0);
+}
 $release = $id ? $releases->find($id) : null;
 
 if (!$release) {
@@ -64,7 +69,7 @@ View::header('Release ' . $release['release_nr'], 'overview');
   </div>
 </div>
 
-<?php if (isset($_GET['saved'])): ?>
+<?php if (isset($_GET['saved']) || isset($_POST['saved'])): ?>
   <p class="flash">Release saved.</p>
 <?php endif; ?>
 
