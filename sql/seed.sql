@@ -47,7 +47,7 @@ INSERT INTO release_environments (release_id, environment, planned_date, deploye
 SELECT r.id, v.environment, v.planned_date, v.deployed_at, v.installed, v.pos
 FROM releases r
 JOIN (
-  SELECT 722 AS nr, 'prodblauw' AS environment, '2026-12-09' AS planned_date, NULL AS deployed_at, 0 AS installed, 60 AS pos UNION ALL
+  SELECT 722, 'prodblauw', '2026-12-09', NULL, 0, 60 UNION ALL
   SELECT 722, 'prodrood',  '2026-12-09', NULL, 0, 70 UNION ALL
   SELECT 722, 'LB 50/50',  '2026-12-09', NULL, 0, 80 UNION ALL
   SELECT 721, 'test2',    '2026-11-04', '2026-11-04', 1, 10 UNION ALL
@@ -68,23 +68,23 @@ JOIN (
   SELECT 717, 'test',     '2026-11-12', '2026-11-12', 1, 20 UNION ALL
   SELECT 717, 'LB 50/50',  '2026-11-09', '2026-11-09', 1, 80 UNION ALL
   SELECT 716, 'prodblauw', '2026-10-30', '2026-10-30', 1, 60 UNION ALL
-  SELECT 716, 'prodrood',  '2026-10-30', '2026-10-30', NULL, 1, 70 UNION ALL
-  SELECT 716, 'LB 50/50',  '2026-10-30', '2026-10-30', NULL, 1, 80 UNION ALL
-  SELECT 715, 'prodblauw', '2026-11-12', NULL, NULL, 0, 60 UNION ALL
-  SELECT 715, 'prodrood',  '2026-11-12', NULL, NULL, 0, 70 UNION ALL
-  SELECT 715, 'LB 50/50',  '2026-11-12', NULL, NULL, 0, 80 UNION ALL
-  SELECT 712, 'prodblauw', '2026-10-23', '2026-10-23', NULL, 1, 60 UNION ALL
-  SELECT 712, 'prodrood',  '2026-10-23', '2026-10-23', NULL, 1, 70 UNION ALL
-  SELECT 712, 'LB 50/50',  '2026-10-23', '2026-10-23', NULL, 1, 80 UNION ALL
-  SELECT 708, 'test',     '2026-10-21', '2026-10-21', NULL, 1, 20 UNION ALL
-  SELECT 697, 'test',     '2026-10-28', '2026-10-28', NULL, 1, 20 UNION ALL
-  SELECT 697, 'accrood',  '2026-10-30', '2026-10-30', NULL, 1, 30 UNION ALL
-  SELECT 697, 'accblauw', '2026-10-30', '2026-10-30', NULL, 1, 40 UNION ALL
-  SELECT 697, 'prodblauw', '2026-11-02', '2026-11-02', NULL, 1, 60 UNION ALL
-  SELECT 697, 'prodrood',  '2026-11-02', '2026-11-02', NULL, 1, 70 UNION ALL
-  SELECT 697, 'LB 50/50',  '2026-11-02', '2026-11-02', NULL, 1, 80 UNION ALL
-  SELECT 690, 'accrood',  '2026-11-19', NULL, NULL, 0, 30 UNION ALL
-  SELECT 690, 'accblauw', '2026-11-19', NULL, NULL, 0, 40
+  SELECT 716, 'prodrood',  '2026-10-30', '2026-10-30', 1, 70 UNION ALL
+  SELECT 716, 'LB 50/50',  '2026-10-30', '2026-10-30', 1, 80 UNION ALL
+  SELECT 715, 'prodblauw', '2026-11-12', NULL, 0, 60 UNION ALL
+  SELECT 715, 'prodrood',  '2026-11-12', NULL, 0, 70 UNION ALL
+  SELECT 715, 'LB 50/50',  '2026-11-12', NULL, 0, 80 UNION ALL
+  SELECT 712, 'prodblauw', '2026-10-23', '2026-10-23', 1, 60 UNION ALL
+  SELECT 712, 'prodrood',  '2026-10-23', '2026-10-23', 1, 70 UNION ALL
+  SELECT 712, 'LB 50/50',  '2026-10-23', '2026-10-23', 1, 80 UNION ALL
+  SELECT 708, 'test',     '2026-10-21', '2026-10-21', 1, 20 UNION ALL
+  SELECT 697, 'test',     '2026-10-28', '2026-10-28', 1, 20 UNION ALL
+  SELECT 697, 'accrood',  '2026-10-30', '2026-10-30', 1, 30 UNION ALL
+  SELECT 697, 'accblauw', '2026-10-30', '2026-10-30', 1, 40 UNION ALL
+  SELECT 697, 'prodblauw', '2026-11-02', '2026-11-02', 1, 60 UNION ALL
+  SELECT 697, 'prodrood',  '2026-11-02', '2026-11-02', 1, 70 UNION ALL
+  SELECT 697, 'LB 50/50',  '2026-11-02', '2026-11-02', 1, 80 UNION ALL
+  SELECT 690, 'accrood',  '2026-11-19', NULL, 0, 30 UNION ALL
+  SELECT 690, 'accblauw', '2026-11-19', NULL, 0, 40
 ) v ON v.nr = r.release_nr;
 
 -- Rollback example (release 721 was rolled back to 10.1.0 on TEST)
