@@ -6,10 +6,10 @@ require_once dirname(__DIR__) . '/src/bootstrap.php';
 
 $config = new Config();
 Auth::requireLogin();
-Auth::verifyCsrf();
 $releases = new Releases(Database::pdoStatic(), $config);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    Auth::verifyCsrf();
     $release = $releases->save($_POST, $_POST['items'] ?? []);
     header('Location: release.php?id=' . $release . '&saved=1');
     exit;
