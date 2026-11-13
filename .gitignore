@@ -1,0 +1,31 @@
+# PDF files from Confluence export
+*.pdf
+
+# Temporary files
+.ov
+*.tmp
+
+# Test files
+r697.txt
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local config (if any)
+config/config.local.php
+
+# Logs
+*.log
+
+# Database dumps
+*.sql
+!sql/schema.sql
+!sql/seed.sql
+
+# Vendor (if we add composer later)
+/vendor
