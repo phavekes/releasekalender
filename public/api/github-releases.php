@@ -27,6 +27,7 @@ $githubReleases = $github->releases($url);
 if ($githubReleases === null) {
     http_response_code(502);
     header('Content-Type: application/json');
+    error_log('GitHub releases API request failed for URL: ' . $url);
     echo json_encode(['error' => 'GitHub API request failed']);
     exit;
 }

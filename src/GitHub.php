@@ -41,11 +41,13 @@ class GitHub
         $response = $this->httpClient->get($url, $headers);
 
         if ($response === null) {
+            error_log('GitHub API: Failed to fetch releases for ' . $owner . '/' . $repo);
             return null;
         }
 
         $data = json_decode($response, true);
         if (!is_array($data)) {
+            error_log('GitHub API: Invalid JSON response for ' . $owner . '/' . $repo . ': ' . substr($response, 0, 200));
             return null;
         }
 

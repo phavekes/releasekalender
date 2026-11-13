@@ -275,8 +275,10 @@
         if (app !== appSelect.value) return;
         render(data);
       })
-      .catch(function () {
-        if (app === appSelect.value) setStatus('Could not load GitHub releases.');
+      .catch(function (error) {
+        if (app !== appSelect.value) return;
+        console.error('Failed to load GitHub releases:', error);
+        setStatus('Could not load GitHub releases.');
       });
   }
 
