@@ -9,18 +9,19 @@ if (!Auth::user()) {
     header('Location: public.php');
     exit;
 }
-$releases = new Releases(Database::pdo(), $config);
-$users = (new Users(Database::pdo()))->all();
+$releases = new Releases(Database::pdoStatic(), $config);
+$users = (new Users(Database::pdoStatic()))->all();
 
 $all = $releases->all();
 $overlaps = $releases->prodDateOverlaps($all);
 
-$filter = $_GET['filter'] ?? 'all';
-$responsibleFilter = $_GET['responsible'] ?? '';
-$appFilter = $_GET['app'] ?? '';
-$currentSub = Auth::user()['sub'] ?? '';
+$filter = (string)($_GET['filter'] ?? 'all');
+$responsibleFilter = (string)($_GET['responsible'] ?? '');
+$appFilter = (string)($_GET['app'] ?? '');
+$currentSub = (string)(Auth::user()['sub'] ?? '');
 
-$rows = array_values(array_filter($all, function ($r) use ($filter, $responsibleFilter, $appFilter, $currentSub) {
+/** @var array<int, array<int, array>> $overlaps */
+$rows = array_values(array_filter($all, function ($r) use ($filter, $responsibleFilter, $appFilter, $currentSub, $overlaps) {
     if ($filter === 'behind' && !$r['behind']) {
         return false;
     }
@@ -30,12 +31,14 @@ $rows = array_values(array_filter($all, function ($r) use ($filter, $responsible
     if ($filter === 'open' && $r['done']) {
         return false;
     }
+    $responsibleFilter = (string)$responsibleFilter;
     if ($responsibleFilter !== '') {
         $wanted = $responsibleFilter === 'mine' ? $currentSub : $responsibleFilter;
         if (($r['responsible'] ?? '') !== $wanted) {
             return false;
         }
     }
+    $appFilter = (string)$appFilter;
     if ($appFilter !== '' && $r['application'] !== $appFilter) {
         return false;
     }

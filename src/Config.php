@@ -2,13 +2,45 @@
 
 declare(strict_types=1);
 
+/**
+ * Configuration management for the Release Calendar.
+ */
 class Config
 {
     private array $config;
 
-    public function __construct()
+    public function __construct(?string $configPath = null)
     {
-        $this->config = require dirname(__DIR__) . '/config/config.php';
+        $path = $configPath ?? dirname(__DIR__) . '/config/config.php';
+        if (!file_exists($path)) {
+            throw new RuntimeException("Configuration file not found: $path");
+        }
+        $this->config = require $path;
+        $this->validate();
+    }
+
+    /**
+     * Validate the configuration.
+     */
+    private function validate(): void
+    {
+        if (!isset($this->config['applications']) || !is_array($this->config['applications'])) {
+            throw new RuntimeException('Missing or invalid "applications" configuration.');
+        }
+
+        if (!isset($this->config['environments']) || !is_array($this->config['environments'])) {
+            throw new RuntimeException('Missing or invalid "environments" configuration.');
+        }
+
+        foreach ($this->config['environments'] as $name => $env) {
+            if (!is_array($env)) {
+                throw new RuntimeException("Invalid environment configuration for " . var_export($name, true));
+            }
+        }
+
+        if (!isset($this->config['oidc']) || !is_array($this->config['oidc'])) {
+            throw new RuntimeException('Missing or invalid "oidc" configuration.');
+        }
     }
 
     public function applications(): array
@@ -55,8 +87,8 @@ class Config
 
     public function environmentLabel(string $environment): string
     {
-        if ($environment === 'LB 50/50') {
-            return 'LB 50/50';
+        if ($environment === Constants::ENV_LB_50_50) {
+            return Constants::ENV_LB_50_50;
         }
         return $this->config['environments'][$environment]['label'] ?? $environment;
     }
@@ -82,5 +114,29 @@ class Config
         $scheme = $https ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
         return $scheme . '://' . $host;
+    }
+
+    /**
+     * Get a specific application configuration.
+     */
+    public function application(string $key): array
+    {
+        return $this->config['applications'][$key] ?? [];
+    }
+
+    /**
+     * Check if an application exists.
+     */
+    public function hasApplication(string $key): bool
+    {
+        return isset($this->config['applications'][$key]);
+    }
+
+    /**
+     * Check if an environment exists.
+     */
+    public function hasEnvironment(string $name): bool
+    {
+        return isset($this->config['environments'][$name]);
     }
 }

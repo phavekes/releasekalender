@@ -6,7 +6,8 @@ require_once dirname(__DIR__) . '/src/bootstrap.php';
 
 $config = new Config();
 Auth::requireLogin();
-$releases = new Releases(Database::pdo(), $config);
+Auth::verifyCsrf();
+$releases = new Releases(Database::pdoStatic(), $config);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $release = $releases->save($_POST, $_POST['items'] ?? []);
@@ -23,6 +24,7 @@ View::header('New release', 'new');
 </div>
 
 <form method="post" class="release-form">
+  <?= Csrf::field() ?>
   <?php $mode = 'new';
         $release = ['release_nr' => $nextNr];
         include __DIR__ . '/_release-form.php'; ?>

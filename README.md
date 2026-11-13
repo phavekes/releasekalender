@@ -1,57 +1,78 @@
-# Release Calendar (Releasekalender)
+# Release Calendar
 
-PHP + MariaDB replacement for the Confluence "Releases SURF Access" pages.
+A web application for tracking and managing software releases across multiple environments.
 
 ## Features
 
-- Overview of all releases with per-environment status, current environment and progress.
-- Each release has a responsible person (defaults to the creator, editable);
-  the overview shows the responsible (nickname) instead of the testers and can
-  be filtered by responsible (including "mine") and by application.
-- Per environment the form has an "installed" checkbox (the application is
-  administered on that environment) and an optional planned date.
-- Releases whose planned PROD date has passed without the application being
-  installed on PROD are highlighted ("behind").
-- Releases planned on the same production date are highlighted ("overlap").
-  Both alerts look only at the planned PROD date.
-- Add-release form with fields from the Confluence page (version, tags, dependencies,
-  database changes, testers, components/changes, notes, deployment steps) and optional
-  planned dates per environment.
-- Per application a GitHub releases URL can be configured; the add-form then lists the
-  GitHub releases not yet in the calendar and prefills version + changes.
-- Detail view where everything is editable, including deployed dates and notes
-  per environment.
-- OIDC login (authorization code flow with PKCE). Every authenticated user can
-  create, edit and delete releases.
+- **Overview page**: Shows all releases with their current status, progress, planned production dates, and responsible person
+- **Status tracking**: Visual indicators for releases that are behind schedule or have overlapping production dates
+- **Responsible person**: Each release has an assigned owner (defaults to creator), filterable by person including "mine"
+- **Per-environment tracking**: For each environment, track whether the application is installed and the planned/deployed dates
+- **Add release form**: Form with all necessary fields including version, changes, and optional planned dates per environment
+- **GitHub integration**: Configure GitHub releases URL per application to auto-populate version and changes from GitHub releases
+- **Detail view**: Edit all release details including deployed dates per environment
+- **OIDC authentication**: Secure login using OpenID Connect (authorization code flow with PKCE). All authenticated users have full CRUD access.
+- **Public view**: Unauthenticated users can see a compact list of past and future releases
+- **Dark/light mode**: Automatically follows OS settings with manual override
 
 ## Configuration
 
-Everything configurable lives in `config/config.php`:
+All configuration is in `config/config.php`:
 
-- managed applications (label + GitHub releases URL)
-- environments (name + whether production)
-- OIDC client info (url, client_id, client_secret) - env vars `OIDC_URL`,
-  `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET` override the file
-- optional GitHub token (or `GITHUB_TOKEN` env var) to raise the API rate limit
-- `dev_bypass` enables a local login without an OIDC provider; use only for
-  local development (env: `DEV_BYPASS`).
+- **Applications**: Managed applications with labels and optional GitHub releases URLs
+- **Environments**: List of environments (test, acceptance, production, etc.) with production flag
+- **OIDC settings**: Provider URL, client ID, client secret. Can also be set via environment variables:
+  - `OIDC_URL`
+  - `OIDC_CLIENT_ID`
+  - `OIDC_CLIENT_SECRET`
+- **GitHub token**: Optional token to raise GitHub API rate limit (or via `GITHUB_TOKEN` env var)
+- **Development mode**: Set `DEV_BYPASS=1` to enable local login without OIDC provider (for development only)
 
-## Run locally
+## Database
+
+The application uses MariaDB/MySQL. The schema is defined in `sql/schema.sql`.
+
+To initialize the database:
+```fish
+# Run the schema
+mysql -u <user> -p <database> < sql/schema.sql
+
+# Optionally load example data
+mysql -u <user> -p <database> < sql/seed.sql
+```
+
+Or use the provided init script:
+```fish
+php sql/init-db.php
+```
+
+## Running Locally
+
+Using Docker Compose:
 
 ```fish
 docker compose up --build
 ```
 
-The database schema is created on startup. With `SEED_EXAMPLE_DATA=1` (set in
-docker-compose.yml) the example data based on the Confluence export is loaded
-when the database is empty.
+This will:
+- Start the application on http://localhost:8080
+- Start a MariaDB container
+- Create the database schema on startup
+- Load example data (can be disabled by removing `SEED_EXAMPLE_DATA=1` from docker-compose.yml)
 
-Open http://localhost:8080 and log in with "Continue as local developer".
+Open http://localhost:8080 and log in with "Continue as local developer" (development mode only).
 
-## Production
+## Running in Production
 
-- Set `oidc` to your provider: url, client_id, client_secret, redirect_uri
-  (`https://<host>/callback.php`) and `dev_bypass` to false.
-- Configure the database via `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`.
-- The container image is built and published to GHCR by `.github/workflows/deploy.yml`
-  on every git tag (and manually via workflow_dispatch).
+1. Set OIDC configuration with your provider details (URL, client ID, client secret)
+2. Set `dev_bypass` to `false`
+3. Configure database connection via environment variables:
+   - `DB_HOST`
+   - `DB_NAME`
+   - `DB_USER`
+   - `DB_PASS`
+4. Ensure the database schema is initialized (run `sql/schema.sql`)
+
+## Deployment
+
+Container images are built and published to GHCR by `.github/workflows/deploy.yml` on every git tag and manually via workflow_dispatch.

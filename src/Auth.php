@@ -11,6 +11,26 @@ declare(strict_types=1);
  */
 class Auth
 {
+    /** @phpstan-ignore-next-line - Used indirectly via OIDCDiscovery */
+    private HttpClient $httpClient;
+    private OIDCDiscovery $oidcDiscovery;
+
+    public function __construct(HttpClient $httpClient, OIDCDiscovery $oidcDiscovery)
+    {
+        $this->httpClient = $httpClient;
+        $this->oidcDiscovery = $oidcDiscovery;
+    }
+
+    /**
+     * Static factory for backward compatibility.
+     */
+    public static function create(): self
+    {
+        $httpClient = new HttpClient();
+        $oidcDiscovery = new OIDCDiscovery($httpClient);
+        return new self($httpClient, $oidcDiscovery);
+    }
+
     public static function user(): ?array
     {
         return $_SESSION['user'] ?? null;
@@ -29,8 +49,35 @@ class Auth
         return self::user() !== null;
     }
 
+    /**
+     * Verify CSRF token for POST requests.
+     */
+    public static function verifyCsrf(): void
+    {
+        if (!Csrf::validatePost()) {
+            http_response_code(403);
+            exit('Invalid CSRF token.');
+        }
+    }
+
+    /**
+     * Apply rate limiting to login attempts.
+     */
+    public static function checkRateLimit(): void
+    {
+        if (!rateLimit('login', 5, 60)) {
+            http_response_code(429);
+            exit('Too many login attempts. Please try again later.');
+        }
+    }
+
     public static function devLogin(): void
     {
+        if (!Csrf::validatePost()) {
+            http_response_code(403);
+            exit('Invalid CSRF token.');
+        }
+
         $_SESSION['user'] = [
             'sub' => 'dev-user',
             'nickname' => 'Local developer',
@@ -38,6 +85,7 @@ class Auth
             'email' => 'dev@localhost',
         ];
         self::registerLogin();
+        Csrf::regenerate(); // Prevent session fixation
         header('Location: index.php');
         exit;
     }
@@ -52,16 +100,17 @@ class Auth
             return;
         }
         try {
-            (new Users(Database::pdo()))->upsert($user);
+            (new Users(Database::pdoStatic()))->upsert($user);
         } catch (PDOException $e) {
             // A failed bookkeeping write should not block the login.
+            error_log("Failed to record login: " . $e->getMessage());
         }
     }
 
-    public static function startLogin(Config $config): void
+    public function startLogin(Config $config): void
     {
         $oidc = $config->oidc();
-        $discovery = OIDCDiscovery::discover($oidc['url']);
+        $discovery = $this->oidcDiscovery->discover($oidc['url']);
 
         $_SESSION['oidc_state'] = bin2hex(random_bytes(16));
         $_SESSION['oidc_nonce'] = bin2hex(random_bytes(16));
@@ -83,29 +132,45 @@ class Auth
         exit;
     }
 
-    public static function handleCallback(Config $config): void
+    /**
+     * Static wrapper for backward compatibility.
+     */
+    public static function startLoginStatic(Config $config): void
     {
+        self::create()->startLogin($config);
+    }
+
+    public function handleCallback(Config $config): void
+    {
+        self::checkRateLimit();
+
         $oidc = $config->oidc();
         $code = $_GET['code'] ?? '';
         $state = $_GET['state'] ?? '';
 
         if ($code === '' || $state === '' || $state !== ($_SESSION['oidc_state'] ?? '')) {
+            error_log("Invalid OIDC callback: state mismatch or missing code");
             http_response_code(400);
             exit('Invalid OIDC callback (state mismatch).');
         }
 
-        $discovery = OIDCDiscovery::discover($oidc['url']);
-        $tokens = self::exchangeCode($oidc, $discovery, $code, self::redirectUri($config, $oidc));
+        $discovery = $this->oidcDiscovery->discover($oidc['url']);
+        $tokens = $this->exchangeCode($oidc, $discovery, $code, self::redirectUri($config, $oidc));
 
         $jwt = (string)($tokens['id_token'] ?? '');
         if ($jwt === '') {
+            error_log("Missing id_token in OIDC response");
             http_response_code(400);
             exit('Missing id_token in OIDC response.');
         }
 
+        // Verify claims FIRST (exp check happens here, fail fast for expired tokens)
         $token = JwtValidator::decode($jwt);
         self::validateToken($token, $oidc, $_SESSION['oidc_nonce'] ?? '');
-        self::verifySignature($jwt, $discovery, $_SESSION['oidc_verifier'] ?? '');
+
+        // Then verify signature (expensive operation)
+        $jwks = $this->oidcDiscovery->fetchJwks($discovery['jwks_uri']);
+        self::verifySignature($jwt, $jwks, 'RS256', null);
 
         $_SESSION['user'] = [
             'sub' => $token['sub'],
@@ -118,8 +183,17 @@ class Auth
         unset($_SESSION['oidc_state'], $_SESSION['oidc_nonce'],
               $_SESSION['oidc_verifier']);
         OIDCDiscovery::clearCache();
+        Csrf::regenerate();
         header('Location: index.php');
         exit;
+    }
+
+    /**
+     * Static wrapper for backward compatibility.
+     */
+    public static function handleCallbackStatic(Config $config): void
+    {
+        self::create()->handleCallback($config);
     }
 
     public static function logout(): void
@@ -148,7 +222,7 @@ class Auth
      * @return array Tokens (id_token, access_token, etc.)
      * @throws RuntimeException On failure
      */
-    private static function exchangeCode(
+    private function exchangeCode(
         array $oidc,
         array $discovery,
         string $code,
@@ -184,6 +258,7 @@ class Auth
         curl_close($ch);
 
         if ($status !== 200) {
+            error_log("OIDC token exchange failed with HTTP $status: $response");
             throw new RuntimeException('OIDC token exchange failed with HTTP ' . $status);
         }
 
@@ -196,9 +271,9 @@ class Auth
     }
 
     /**
-     * Validate JWT token claims.
+     * Validate JWT token claims against expected values.
      *
-     * @param array $token Decoded JWT payload
+     * @param array $token The decoded JWT payload
      * @param array $oidc OIDC configuration
      * @param string $nonce Expected nonce
      * @return void
@@ -206,11 +281,6 @@ class Auth
      */
     private static function validateToken(array $token, array $oidc, string $nonce): void
     {
-        // Validate required fields exist
-        if (!isset($token['sub'], $token['iss'], $token['exp'], $token['aud'], $token['nonce'])) {
-            throw new InvalidArgumentException('Missing required JWT claims.');
-        }
-
         JwtValidator::verifyClaims(
             $token,
             $oidc['url'],
@@ -223,23 +293,14 @@ class Auth
      * Verify JWT signature.
      *
      * @param string $jwt JWT to verify
-     * @param array $discovery OIDC discovery document
-     * @param string $verifier PKCE code verifier
+     * @param array $jwks JWKS keys
+     * @param string $expectedAlg Expected algorithm
+     * @param string $expectedKid Expected key ID
      * @return void
      * @throws InvalidArgumentException On verification failure
      */
-    private static function verifySignature(string $jwt, array $discovery, string $verifier): void
+    private static function verifySignature(string $jwt, array $jwks, string $expectedAlg, ?string $expectedKid): void
     {
-        $parts = explode('.', $jwt);
-        if (count($parts) !== 3) {
-            throw new InvalidArgumentException('Malformed JWT for signature verification.');
-        }
-
-        $header = JwtValidator::decode($parts[0]);
-        $kid = $header['kid'] ?? null;
-
-        $jwks = OIDCDiscovery::fetchJwks($discovery['jwks_uri']);
-
-        JwtValidator::verifySignature($jwt, $jwks, 'RS256', $kid);
+        JwtValidator::verifySignature($jwt, $jwks, $expectedAlg, $expectedKid);
     }
 }

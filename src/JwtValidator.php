@@ -37,6 +37,9 @@ class JwtValidator
     /**
      * Verify JWT claims against expected values.
      *
+     * Note: This should be called BEFORE signature verification to fail fast
+     * on obviously invalid tokens (expired, wrong issuer/audience, etc.).
+     *
      * @param array $token The decoded JWT payload
      * @param string $issuer Expected issuer
      * @param string $clientId Expected audience/client ID
@@ -50,24 +53,29 @@ class JwtValidator
         string $clientId,
         string $nonce
     ): void {
+        // Validate required fields exist first
+        if (!isset($token['sub'], $token['iss'], $token['exp'], $token['aud'], $token['nonce'])) {
+            throw new InvalidArgumentException('Missing required JWT claims.');
+        }
+
+        // Verify expiration FIRST (fail fast for expired tokens)
+        if ($token['exp'] < time()) {
+            throw new InvalidArgumentException('id_token expired.');
+        }
+
         // Verify issuer
-        if (($token['iss'] ?? '') !== rtrim($issuer, '/')) {
+        if ($token['iss'] !== rtrim($issuer, '/')) {
             throw new InvalidArgumentException('id_token issuer mismatch.');
         }
 
         // Verify audience
-        $audience = (array)($token['aud'] ?? []);
+        $audience = (array)$token['aud'];
         if (!in_array($clientId, $audience, true)) {
             throw new InvalidArgumentException('id_token audience mismatch.');
         }
 
-        // Verify expiration
-        if (($token['exp'] ?? 0) < time()) {
-            throw new InvalidArgumentException('id_token expired.');
-        }
-
         // Verify nonce
-        if (($token['nonce'] ?? '') !== $nonce) {
+        if ($token['nonce'] !== $nonce) {
             throw new InvalidArgumentException('id_token nonce mismatch.');
         }
     }
@@ -95,7 +103,7 @@ class JwtValidator
 
         // Decode header to get algorithm and key ID
         $header = self::decodeHeader($parts[0]);
-        
+
         if (($header['alg'] ?? '') !== $expectedAlg) {
             throw new InvalidArgumentException(
                 'Unsupported id_token algorithm ' . ($header['alg'] ?? '?') . ', expected ' . $expectedAlg
@@ -111,7 +119,7 @@ class JwtValidator
         // Find the matching key in JWKS
         $signatureB64 = $parts[2];
         $signingInput = $parts[0] . '.' . $parts[1];
-        
+
         foreach ($jwks['keys'] as $key) {
             if (($key['kty'] ?? '') !== 'RSA') {
                 continue;
@@ -125,7 +133,7 @@ class JwtValidator
 
             $pem = self::jwkToPem($key['n'], $key['e']);
             $signature = self::base64UrlDecode($signatureB64);
-            
+
             if ($signature === null) {
                 throw new InvalidArgumentException('Cannot decode JWT signature.');
             }
@@ -162,8 +170,18 @@ class JwtValidator
      */
     public static function base64UrlDecode(string $data): ?string
     {
-        $result = base64_decode(strtr($data, '-_', '+/'));
-        return $result !== false ? $result : null;
+        $base64 = strtr($data, '-_', '+/');
+        // Add padding if needed
+        $padding = strlen($base64) % 4;
+        if ($padding > 0) {
+            $base64 .= str_repeat('=', 4 - $padding);
+        }
+        
+        $result = base64_decode($base64, true);
+        if ($result === false) {
+            return null;
+        }
+        return $result;
     }
 
     /**

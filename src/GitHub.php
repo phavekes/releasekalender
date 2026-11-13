@@ -9,8 +9,13 @@ declare(strict_types=1);
  */
 class GitHub
 {
-    public function __construct(private string $token)
+    private HttpClient $httpClient;
+    private string $token;
+
+    public function __construct(string $token, HttpClient $httpClient)
     {
+        $this->token = $token;
+        $this->httpClient = $httpClient;
     }
 
     /**
@@ -32,19 +37,13 @@ class GitHub
             $headers[] = 'Authorization: Bearer ' . $this->token;
         }
 
-        $ch = curl_init('https://api.github.com/repos/' . $owner . '/' . $repo . '/releases?per_page=20');
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_TIMEOUT => 10,
-            CURLOPT_FOLLOWLOCATION => true,
-        ]);
-        $response = curl_exec($ch);
-        $status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+        $url = 'https://api.github.com/repos/' . $owner . '/' . $repo . '/releases?per_page=20';
+        $response = $this->httpClient->get($url, $headers);
 
-        if ($status !== 200 || !is_string($response)) {
+        if ($response === null) {
             return null;
         }
+
         $data = json_decode($response, true);
         if (!is_array($data)) {
             return null;
@@ -64,5 +63,13 @@ class GitHub
             ];
         }
         return $releases;
+    }
+
+    /**
+     * Static factory method for backward compatibility.
+     */
+    public static function create(string $token): self
+    {
+        return new self($token, new HttpClient());
     }
 }

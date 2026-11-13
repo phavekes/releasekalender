@@ -24,7 +24,9 @@ class View
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= e($title) ?> - ReleaseCalendar</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title><?= e($title) ?> - <?= e(Constants::APP_NAME) ?></title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -44,7 +46,7 @@ class View
 <body>
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="<?= e($homeUrl) ?>">ReleaseCalendar</a>
+    <a class="brand" href="<?= e($homeUrl) ?>"><?= e(Constants::APP_NAME) ?></a>
     <nav class="nav">
       <?php if ($user): ?>
         <a href="index.php" class="<?= $active === 'overview' ? 'active' : '' ?>">Overview</a>
@@ -59,10 +61,10 @@ class View
       <?php endif; ?>
       <button type="button" id="theme-toggle" class="btn btn-ghost theme-toggle"
               aria-label="Switch color theme" title="Color theme: click to cycle Auto / Light / Dark">
-        <?= View::themeIcon() ?>
+        <?= self::themeIcon() ?>
       </button>
       <?php if ($user): ?>
-        <span class="user-name"><?= e(View::displayName($user)) ?></span>
+        <span class="user-name"><?= e(self::displayName($user)) ?></span>
         <a class="btn btn-ghost" href="logout.php">Log out</a>
       <?php endif; ?>
     </div>
@@ -115,5 +117,15 @@ class View
             . '<path d="M8 2v2M8 12v2M2 8h2M12 8h2"/>'
             . '<path d="m5.9 5.9 1.4 1.4M9.7 9.7 11.1 11.1M5.9 10.1 7.3 8.7M9.7 5.9 11.1 7.3"/>'
             . '</svg>';
+    }
+
+    /**
+     * Alert message.
+     */
+    public static function alert(string $type, string $message): string
+    {
+        $types = ['error', 'warning', 'success', 'info'];
+        $type = in_array($type, $types, true) ? $type : 'info';
+        return '<p class="alert alert-' . e($type) . '">' . e($message) . '</p>';
     }
 }

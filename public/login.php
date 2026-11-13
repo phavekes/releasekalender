@@ -8,10 +8,12 @@ $config = new Config();
 $oidc = $config->oidc();
 
 if (isset($_POST['dev'])) {
+    Auth::checkRateLimit();
     Auth::devLogin();
 }
 if (isset($_POST['oidc'])) {
-    Auth::startLogin($config);
+    Auth::checkRateLimit();
+    Auth::startLoginStatic($config);
 }
 
 View::header('Log in');
@@ -22,6 +24,7 @@ View::header('Log in');
 
   <?php if ($oidc['url'] !== '' && $oidc['client_id'] !== ''): ?>
     <form method="post">
+      <?= Csrf::field() ?>
       <button type="submit" name="oidc" value="1" class="btn btn-primary btn-block">Log in with OIDC</button>
     </form>
   <?php endif; ?>
@@ -31,6 +34,7 @@ View::header('Log in');
       <div class="divider"><span>local development</span></div>
     <?php endif; ?>
     <form method="post">
+      <?= Csrf::field() ?>
       <button type="submit" name="dev" value="1" class="btn btn-block">Continue as local developer</button>
     </form>
   <?php endif; ?>

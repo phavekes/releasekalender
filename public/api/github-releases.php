@@ -5,7 +5,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/src/bootstrap.php';
 
 $config = new Config();
-$releases = new Releases(Database::pdo(), $config);
+$releases = new Releases(Database::pdoStatic(), $config);
 $github = new GitHub($config->githubToken());
 
 $app = $_GET['app'] ?? '';

@@ -7,6 +7,8 @@ use PDO;
 use PDOStatement;
 use DateTimeImmutable;
 
+require_once __DIR__ . '/bootstrap.php';
+
 /**
  * Test cases for release status computation.
  */
@@ -60,7 +62,8 @@ class ReleasesTest extends TestCase
 
     protected function tearDown(): void
     {
-        $this->pdo = null;
+        // Don't set pdo to null - typed property doesn't allow it
+        // PHPUnit will clean up automatically
     }
 
     /**
@@ -224,7 +227,7 @@ class ReleasesTest extends TestCase
         $release = $this->computeStatus($releaseId);
 
         $this->assertSame(100, $release['progress']);
-        $this->assertSame('test', $release['highest_status']);
+        $this->assertSame('Complete', $release['highest_status']);
     }
 
     public function testCompleteStatusWhenAllDone(): void

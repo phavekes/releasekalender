@@ -15,6 +15,4 @@
     <exclude-pattern>public/api/*</exclude-pattern>
     <exclude-pattern>vendor/*</exclude-pattern>
     
-    <!-- Custom sniffs -->
-    <arg name="colors" value="0"/>
 </ruleset>

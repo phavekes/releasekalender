@@ -1,7 +1,4 @@
 <?php
 
-// Load the autoloader
-require_once dirname(__DIR__) . '/vendor/autoload.php';
-
-// Set up a test database connection if needed
-// For now, we'll use mocks for testing
+// Load the bootstrap to get helper functions
+require_once __DIR__ . '/../src/bootstrap.php';

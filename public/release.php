@@ -6,8 +6,23 @@ require_once dirname(__DIR__) . '/src/bootstrap.php';
 
 $config = new Config();
 Auth::requireLogin();
-$releases = new Releases(Database::pdo(), $config);
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    Auth::verifyCsrf();
+    $releases = new Releases(Database::pdoStatic(), $config);
+    
+    $id = (int)($_POST['id'] ?? 0);
+    if (isset($_POST['delete'])) {
+        $releases->delete($id);
+        header('Location: index.php');
+        exit;
+    }
+    $releases->save($_POST, $_POST['items'] ?? [], $id);
+    header('Location: release.php?id=' . $id . '&saved=1');
+    exit;
+}
+
+$releases = new Releases(Database::pdoStatic(), $config);
 $id = (int)($_GET['id'] ?? 0);
 $release = $id ? $releases->find($id) : null;
 
@@ -16,17 +31,6 @@ if (!$release) {
     View::header('Not found');
     echo '<p class="error">Release not found.</p>';
     View::footer();
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['delete'])) {
-        $releases->delete($id);
-        header('Location: index.php');
-        exit;
-    }
-    $releases->save($_POST, $_POST['items'] ?? [], $id);
-    header('Location: release.php?id=' . $id . '&saved=1');
     exit;
 }
 
@@ -65,6 +69,8 @@ View::header('Release ' . $release['release_nr'], 'overview');
 <?php endif; ?>
 
 <form method="post" class="release-form">
+  <input type="hidden" name="id" value="<?= (int)$release['id'] ?>">
+  <?= Csrf::field() ?>
   <?php $mode = 'edit'; include __DIR__ . '/_release-form.php'; ?>
   <div class="form-actions">
     <button type="submit" class="btn btn-primary">Save changes</button>

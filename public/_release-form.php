@@ -8,7 +8,7 @@
  *  Release details, Planned dates, Context, Deployment (standard workflow), Rollback. */
 
 $release ??= null;
-$users = (new Users(Database::pdo()))->all();
+$users = (new Users(Database::pdoStatic()))->all();
 /** Default responsible for a new release is the creator (the logged-in user). */
 $responsible = $release['responsible'] ?? (Auth::user()['sub'] ?? '');
 $value = fn(string $field) => e($release[$field] ?? '');

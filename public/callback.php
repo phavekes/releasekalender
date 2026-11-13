@@ -5,4 +5,5 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/src/bootstrap.php';
 
 $config = new Config();
-Auth::handleCallback($config);
+Auth::checkRateLimit();
+Auth::handleCallbackStatic($config);

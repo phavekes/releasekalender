@@ -7,7 +7,34 @@ declare(strict_types=1);
  */
 class OIDCDiscovery
 {
+    private static ?HttpClient $httpClient = null;
     private static ?array $cache = null;
+    private HttpClient $client;
+
+    public function __construct(HttpClient $httpClient)
+    {
+        $this->client = $httpClient;
+    }
+
+    /**
+     * Set the static HTTP client instance.
+     */
+    public static function setHttpClient(HttpClient $client): void
+    {
+        self::$httpClient = $client;
+        self::$cache = null; // Reset cache when client changes
+    }
+
+    /**
+     * Get the HTTP client instance.
+     */
+    private static function client(): HttpClient
+    {
+        if (self::$httpClient === null) {
+            self::$httpClient = new HttpClient();
+        }
+        return self::$httpClient;
+    }
 
     /**
      * Fetch and cache the OIDC discovery document.
@@ -16,14 +43,14 @@ class OIDCDiscovery
      * @return array The discovery document
      * @throws RuntimeException If the discovery document cannot be fetched or is invalid
      */
-    public static function discover(string $issuer): array
+    public function discover(string $issuer): array
     {
         if (self::$cache !== null) {
             return self::$cache;
         }
 
         $url = rtrim($issuer, '/') . '/.well-known/openid-configuration';
-        $response = self::httpGet($url);
+        $response = $this->client->get($url);
 
         if ($response === null) {
             throw new RuntimeException('Could not fetch OIDC discovery document from ' . $url);
@@ -39,11 +66,19 @@ class OIDCDiscovery
     }
 
     /**
+     * Static wrapper for discover.
+     */
+    public static function discoverStatic(string $issuer): array
+    {
+        return (new self(self::client()))->discover($issuer);
+    }
+
+    /**
      * Get JWKS URI from discovery document.
      */
-    public static function getJwksUri(string $issuer): string
+    public function getJwksUri(string $issuer): string
     {
-        $discovery = self::discover($issuer);
+        $discovery = $this->discover($issuer);
         if (!isset($discovery['jwks_uri'])) {
             throw new RuntimeException('JWKS URI not found in discovery document.');
         }
@@ -51,21 +86,45 @@ class OIDCDiscovery
     }
 
     /**
+     * Static wrapper for getJwksUri.
+     */
+    public static function getJwksUriStatic(string $issuer): string
+    {
+        return (new self(self::client()))->getJwksUri($issuer);
+    }
+
+    /**
      * Get authorization endpoint from discovery document.
      */
-    public static function getAuthorizationEndpoint(string $issuer): string
+    public function getAuthorizationEndpoint(string $issuer): string
     {
-        $discovery = self::discover($issuer);
+        $discovery = $this->discover($issuer);
         return $discovery['authorization_endpoint'];
+    }
+
+    /**
+     * Static wrapper for getAuthorizationEndpoint.
+     */
+    public static function getAuthorizationEndpointStatic(string $issuer): string
+    {
+        return (new self(self::client()))->getAuthorizationEndpoint($issuer);
     }
 
     /**
      * Get token endpoint from discovery document.
      */
-    public static function getTokenEndpoint(string $issuer): string
+    public function getTokenEndpoint(string $issuer): string
     {
-        $discovery = self::discover($issuer);
+        $discovery = $this->discover($issuer);
         return $discovery['token_endpoint'];
+    }
+
+    /**
+     * Static wrapper for getTokenEndpoint.
+     */
+    public static function getTokenEndpointStatic(string $issuer): string
+    {
+        return (new self(self::client()))->getTokenEndpoint($issuer);
     }
 
     /**
@@ -77,47 +136,15 @@ class OIDCDiscovery
     }
 
     /**
-     * Make an HTTP GET request.
-     *
-     * @param string $url The URL to fetch
-     * @return string|null The response body, or null on failure
-     */
-    private static function httpGet(string $url): ?string
-    {
-        $ch = curl_init($url);
-        if ($ch === false) {
-            return null;
-        }
-
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 10,
-            CURLOPT_FOLLOWLOCATION => true,
-        ]);
-
-        $response = curl_exec($ch);
-        if ($response === false) {
-            return null;
-        }
-
-        $status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        if ($status !== 200) {
-            return null;
-        }
-
-        return $response;
-    }
-
-    /**
      * Fetch JWKS from the JWKS URI.
      *
      * @param string $jwksUri The JWKS URI
      * @return array The JWKS keys
      * @throws RuntimeException If the JWKS cannot be fetched
      */
-    public static function fetchJwks(string $jwksUri): array
+    public function fetchJwks(string $jwksUri): array
     {
-        $response = self::httpGet($jwksUri);
+        $response = $this->client->get($jwksUri);
         if ($response === null) {
             throw new RuntimeException('Could not fetch JWKS from ' . $jwksUri);
         }
@@ -128,5 +155,13 @@ class OIDCDiscovery
         }
 
         return $jwks;
+    }
+
+    /**
+     * Static wrapper for fetchJwks.
+     */
+    public static function fetchJwksStatic(string $jwksUri): array
+    {
+        return (new self(self::client()))->fetchJwks($jwksUri);
     }
 }

@@ -3,11 +3,6 @@ parameters:
     paths:
         - src
         - public
-    exclude:
+    excludePaths:
         - public/assets
         - public/api
-
-    checkMissingIterableValue: false
-
-includes:
-    - vendor/phpstan/phpstan/conf/bleedingEdge.neon

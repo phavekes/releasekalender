@@ -7,34 +7,83 @@ declare(strict_types=1);
  */
 class Releases
 {
-    public function __construct(private PDO $pdo, private Config $config)
+    private PDO $pdo;
+    private Config $config;
+
+    public function __construct(PDO $pdo, Config $config)
     {
+        $this->pdo = $pdo;
+        $this->config = $config;
     }
 
     public function all(): array
     {
-        $rows = $this->pdo->query('SELECT * FROM releases ORDER BY release_nr DESC')->fetchAll();
-        $envRows = $this->pdo->query(
-            'SELECT * FROM release_environments ORDER BY release_id, position, id'
+        // Use a single query with JOIN for better performance
+        $rows = $this->pdo->query(
+            'SELECT r.*, re.* '
+            . 'FROM releases r '
+            . 'LEFT JOIN release_environments re ON re.release_id = r.id '
+            . 'ORDER BY r.release_nr DESC, re.position, re.id'
         )->fetchAll();
 
-        $envsByRelease = [];
-        foreach ($envRows as $envRow) {
-            $envsByRelease[$envRow['release_id']][] = $envRow;
+        $releases = [];
+        $currentReleaseId = null;
+        $currentRelease = null;
+
+        foreach ($rows as $row) {
+            if ($row['id'] !== $currentReleaseId) {
+                // New release
+                if ($currentRelease !== null) {
+                    $releases[] = $this->computeStatus($currentRelease);
+                }
+                $currentReleaseId = $row['id'];
+                $currentRelease = [
+                    'id' => $row['id'],
+                    'release_nr' => $row['release_nr'],
+                    'application' => $row['application'],
+                    'version' => $row['version'],
+                    'previous_version' => $row['previous_version'],
+                    'description' => $row['description'],
+                    'deploy_tag' => $row['deploy_tag'],
+                    'environments_tag' => $row['environments_tag'],
+                    'dependencies' => $row['dependencies'],
+                    'db_changes' => $row['db_changes'],
+                    'testers' => $row['testers'],
+                    'responsible' => $row['responsible'],
+                    'changelog' => $row['changelog'],
+                    'notes' => $row['notes'],
+                    'rollback' => $row['rollback'],
+                    'created_at' => $row['created_at'],
+                    'created_by' => $row['created_by'],
+                    'environments' => [],
+                ];
+            }
+
+            if ($row['release_id'] !== null) {
+                $currentRelease['environments'][] = [
+                    'id' => $row['id'],
+                    'release_id' => $row['release_id'],
+                    'environment' => $row['environment'],
+                    'planned_date' => $row['planned_date'],
+                    'deployed_at' => $row['deployed_at'],
+                    'installed' => $row['installed'],
+                    'position' => $row['position'],
+                ];
+            }
         }
 
-        $releases = [];
-        foreach ($rows as $row) {
-            $release = $row;
-            $release['environments'] = $envsByRelease[$row['id']] ?? [];
-            $releases[] = $this->computeStatus($release);
+        if ($currentRelease !== null) {
+            $releases[] = $this->computeStatus($currentRelease);
         }
+
         return $releases;
     }
 
     public function find(int $id): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT * FROM releases WHERE id = ?');
+        $stmt = $this->pdo->prepare(
+            'SELECT * FROM releases WHERE id = ?'
+        );
         $stmt->execute([$id]);
         $release = $stmt->fetch();
         if (!$release) {
@@ -74,18 +123,18 @@ class Releases
         $release['current_environment'] = $currentItem['environment'] ?? null;
         $release['current_item'] = $currentItem;
         $release['progress'] = $total === 0 ? 0 : (int)round(100 * $doneCount / $total);
-        
+
         // Highest status is the furthest completed environment in the pipeline order
         // Build the full pipeline order: environments from config + LB 50/50
         $envOrder = array_keys($this->config->environments());
-        $allEnvOrder = array_merge($envOrder, ['LB 50/50']);
+        $allEnvOrder = array_merge($envOrder, [Constants::ENV_LB_50_50]);
         $completedEnvironments = [];
         foreach ($items as $item) {
             if ($isComplete($item)) {
                 $completedEnvironments[] = $item['environment'];
             }
         }
-        
+
         // Find the furthest environment in the pipeline that's completed
         $highestEnv = null;
         foreach ($allEnvOrder as $envName) {
@@ -93,13 +142,13 @@ class Releases
                 $highestEnv = $envName;
             }
         }
-        
+
         if ($doneCount === $total && $total > 0) {
-            $release['highest_status'] = 'Complete';
+            $release['highest_status'] = Constants::STATUS_COMPLETE;
         } elseif ($highestEnv !== null) {
             $release['highest_status'] = $this->config->environmentLabel($highestEnv);
         } else {
-            $release['highest_status'] = 'Not started';
+            $release['highest_status'] = Constants::STATUS_NOT_STARTED;
         }
 
         // Prod is complete when every production environment (prodblauw and
@@ -133,14 +182,13 @@ class Releases
             }
         }
         $release['behind'] = $prodPlanned !== null && !$prodDone && $prodPlanned < $today;
-
         $release['prod_planned_date'] = $prodPlanned;
 
         return $release;
     }
 
     /**
-     * release ids of releases that share a planned PROD date with another release.
+     * Release IDs of releases that share a planned PROD date with another release.
      */
     public function prodDateOverlaps(array $releases): array
     {
@@ -163,7 +211,7 @@ class Releases
 
     public function nextReleaseNr(): int
     {
-        return (int)$this->pdo->query('SELECT COALESCE(MAX(release_nr), 700) + 1 FROM releases')->fetchColumn();
+        return (int)$this->pdo->query('SELECT COALESCE(MAX(release_nr), ' . Constants::DEFAULT_RELEASE_NR . ') + 1 FROM releases')->fetchColumn();
     }
 
     /**
@@ -182,12 +230,20 @@ class Releases
         return array_unique($versions);
     }
 
+    /**
+     * Save a release with its environments.
+     *
+     * @param array $data Release data
+     * @param array $items Environment items
+     * @param int|null $id Release ID (null for new release)
+     * @return int The release ID
+     */
     public function save(array $data, array $items, ?int $id = null): int
     {
         $fields = [
             'release_nr', 'application', 'version', 'previous_version', 'description',
             'deploy_tag', 'environments_tag', 'dependencies', 'db_changes', 'testers',
-            'responsible', 'changelog', 'notes', 'rollback',
+            'responsible', 'changelog', 'rollback',
         ];
         $created = Auth::user()['name'] ?? null;
 
@@ -214,10 +270,14 @@ class Releases
             return $id;
         } catch (Throwable $e) {
             $this->pdo->rollBack();
+            error_log("Failed to save release: " . $e->getMessage());
             throw $e;
         }
     }
 
+    /**
+     * Convert empty strings to null for the given fields.
+     */
     private function nullEmpty(array $fields, array $data): array
     {
         return array_map(
@@ -230,8 +290,10 @@ class Releases
     }
 
     /**
-     * $items: list of ['name' =>, 'planned_date' => ?string, 'deployed_at' => ?string,
-     * 'installed' => ?string] in list order.
+     * Save environment items for a release.
+     *
+     * @param int $releaseId Release ID
+     * @param array $items Environment items
      */
     private function saveItems(int $releaseId, array $items): void
     {
@@ -269,9 +331,73 @@ class Releases
         return $id === false ? null : $this->find((int)$id);
     }
 
+    /**
+     * Delete a release.
+     *
+     * @param int $id Release ID
+     */
     public function delete(int $id): void
     {
-        $stmt = $this->pdo->prepare('DELETE FROM releases WHERE id = ?');
-        $stmt->execute([$id]);
+        try {
+            $stmt = $this->pdo->prepare('DELETE FROM releases WHERE id = ?');
+            $stmt->execute([$id]);
+        } catch (PDOException $e) {
+            error_log("Failed to delete release $id: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Get releases for a specific application.
+     *
+     * @param string $application Application key
+     * @return array Releases
+     */
+    public function byApplication(string $application): array
+    {
+        return array_filter($this->all(), fn($r) => $r['application'] === $application);
+    }
+
+    /**
+     * Get releases for a specific responsible person.
+     *
+     * @param string $sub User sub
+     * @return array Releases
+     */
+    public function byResponsible(string $sub): array
+    {
+        return array_filter($this->all(), fn($r) => ($r['responsible'] ?? '') === $sub);
+    }
+
+    /**
+     * Get releases that are behind schedule.
+     *
+     * @return array Releases
+     */
+    public function behindSchedule(): array
+    {
+        return array_filter($this->all(), fn($r) => $r['behind']);
+    }
+
+    /**
+     * Get releases with overlapping production dates.
+     *
+     * @return array Releases
+     */
+    public function overlapping(): array
+    {
+        $all = $this->all();
+        $overlaps = $this->prodDateOverlaps($all);
+        return array_filter($all, fn($r) => isset($overlaps[$r['id']]));
+    }
+
+    /**
+     * Get open (not complete) releases.
+     *
+     * @return array Releases
+     */
+    public function open(): array
+    {
+        return array_filter($this->all(), fn($r) => !$r['done']);
     }
 }

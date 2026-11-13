@@ -32,61 +32,61 @@ class Workflow
             ],
             [
                 'title' => 'TEST2',
-                'env' => 'test2',
+                'env' => Constants::ENV_TEST2,
                 'commands' => [
-                    './scripts/appdeploy test2 ' . $app,
+                    './scripts/appdeploy ' . Constants::ENV_TEST2 . ' ' . $app,
                 ],
             ],
             [
                 'title' => 'TEST',
-                'env' => 'test',
+                'env' => Constants::ENV_TEST,
                 'commands' => [
-                    './scripts/appdeploy test ' . $app,
+                    './scripts/appdeploy ' . Constants::ENV_TEST . ' ' . $app,
                 ],
             ],
             [
                 'title' => 'ACCBLAUW',
-                'env' => 'accblauw',
+                'env' => Constants::ENV_ACCBLAUW,
                 'commands' => [
                     './scripts/blauw acc ' . $app . ' 0',
-                    './scripts/appdeploy accblauw ' . $app,
+                    './scripts/appdeploy ' . Constants::ENV_ACCBLAUW . ' ' . $app,
                     './scripts/blauw acc ' . $app . ' 100',
                 ],
             ],
             [
                 'title' => 'ACCROOD',
-                'env' => 'accrood',
+                'env' => Constants::ENV_ACCROOD,
                 'commands' => [
-                    './scripts/appdeploy accrood ' . $app,
+                    './scripts/appdeploy ' . Constants::ENV_ACCROOD . ' ' . $app,
                     './scripts/blauw acc ' . $app . ' 50',
                 ],
             ],
             [
                 'title' => '4E SET',
-                'env' => '4eset',
+                'env' => Constants::ENV_4ESET,
                 'commands' => [
-                    './scripts/appdeploy 4eset ' . $app,
+                    './scripts/appdeploy ' . Constants::ENV_4ESET . ' ' . $app,
                 ],
             ],
             [
                 'title' => 'PRODBLAUW',
-                'env' => 'prodblauw',
+                'env' => Constants::ENV_PRODBLAUW,
                 'commands' => [
                     './scripts/blauw prod ' . $app . ' 0',
-                    './scripts/appdeploy prodblauw ' . $app,
+                    './scripts/appdeploy ' . Constants::ENV_PRODBLAUW . ' ' . $app,
                 ],
             ],
             [
                 'title' => 'PRODROOD',
-                'env' => 'prodrood',
+                'env' => Constants::ENV_PRODROOD,
                 'commands' => [
                     './scripts/blauw prod ' . $app . ' 100',
-                    './scripts/appdeploy prodrood ' . $app,
+                    './scripts/appdeploy ' . Constants::ENV_PRODROOD . ' ' . $app,
                 ],
             ],
             [
                 'title' => 'PROD LB 50/50',
-                'env' => 'LB 50/50',
+                'env' => Constants::ENV_LB_50_50,
                 'commands' => [
                     './scripts/blauw prod ' . $app . ' 50',
                 ],

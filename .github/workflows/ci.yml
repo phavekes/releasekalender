@@ -2,17 +2,17 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
 
 jobs:
   test:
-    name: PHP ${{ matrix.php }} Tests
+    name: PHP 8.5 Tests
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php: ['8.1', '8.2', '8.3']
+        php: ['8.5']
     
     steps:
       - name: Checkout code
@@ -32,7 +32,7 @@ jobs:
         run: vendor/bin/phpstan analyse --no-progress
 
       - name: Run PHP CodeSniffer
-        run: vendor/bin/phpcs --colors
+        run: vendor/bin/phpcs
 
       - name: Run PHPUnit tests
         run: vendor/bin/phpunit --colors=never
