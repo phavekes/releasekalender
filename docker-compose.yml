@@ -1,0 +1,41 @@
+name: releasekalender
+
+services:
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: releasekalender
+      MARIADB_USER: releasekalender
+      MARIADB_PASSWORD: releasekalender
+      MARIADB_ROOT_PASSWORD: root
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: releasekalender
+      DB_USER: releasekalender
+      DB_PASS: releasekalender
+      # Loads the example data (Confluence export) when the database is empty.
+      SEED_EXAMPLE_DATA: 1
+      # Local development login without an OIDC provider.
+      # Set OIDC_URL, OIDC_CLIENT_ID and OIDC_CLIENT_SECRET (or fill them in
+      # config/config.php) and disable DEV_BYPASS for a real provider.
+      DEV_BYPASS: 1
+      # GITHUB_TOKEN: ghp_xxx
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db_data:
