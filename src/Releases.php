@@ -231,7 +231,7 @@ class Releases
 
     /**
      * $items: list of ['name' =>, 'planned_date' => ?string, 'deployed_at' => ?string,
-     * 'note' => ?string, 'installed' => ?string] in list order.
+     * 'installed' => ?string] in list order.
      */
     private function saveItems(int $releaseId, array $items): void
     {
@@ -240,8 +240,8 @@ class Releases
 
         $insert = $this->pdo->prepare(
             'INSERT INTO release_environments
-                (release_id, environment, planned_date, deployed_at, note, installed, position)
-             VALUES (?, ?, ?, ?, ?, ?, ?)'
+                (release_id, environment, planned_date, deployed_at, installed, position)
+             VALUES (?, ?, ?, ?, ?, ?)'
         );
         $position = 0;
         foreach ($items as $data) {
@@ -255,10 +255,9 @@ class Releases
             $position += 10;
             $planned = trim((string)($data['planned_date'] ?? '')) ?: null;
             $deployed = trim((string)($data['deployed_at'] ?? '')) ?: null;
-            $note = trim((string)($data['note'] ?? '')) ?: null;
             // Checkboxes are only submitted when ticked.
             $installed = !empty($data['installed']) ? 1 : 0;
-            $insert->execute([$releaseId, $name, $planned, $deployed, $note, $installed, $position]);
+            $insert->execute([$releaseId, $name, $planned, $deployed, $installed, $position]);
         }
     }
 

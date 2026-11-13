@@ -29,11 +29,13 @@ CREATE TABLE IF NOT EXISTS release_environments (
   environment VARCHAR(32) NOT NULL,
   planned_date DATE NULL,
   deployed_at DATE NULL,
-  note VARCHAR(255) NULL,
   UNIQUE KEY uniq_release_env (release_id, environment),
   CONSTRAINT fk_release_env_release
     FOREIGN KEY (release_id) REFERENCES releases(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
+
+-- Remove note column from release_environments
+ALTER TABLE release_environments DROP COLUMN IF EXISTS note;
 
 -- Whether the application is installed on the environment (checkbox in the form)
 ALTER TABLE release_environments ADD COLUMN IF NOT EXISTS installed TINYINT(1) NOT NULL DEFAULT 0;
@@ -92,21 +94,21 @@ UPDATE release_environments SET installed = 1
 ALTER TABLE releases ADD COLUMN IF NOT EXISTS rollback TEXT NULL AFTER deployment_steps;
 
 -- Environment list changed to the deploy pipeline (test2, test, accrood,
--- accblauw, 4eset, prodblauw, prodrood). Convert existing rows: TEST2/TEST
+-- accblauw, 4eset, prodblauw, prodrood, LB 50/50). Convert existing rows: TEST2/TEST
 -- are renamed, ACC splits into accrood + accblauw, PROD into prodblauw +
 -- prodrood. MGNT and other unknown environments are removed.
 UPDATE release_environments SET environment='test2' WHERE environment='TEST2';
 UPDATE release_environments SET environment='test' WHERE environment='TEST';
-INSERT IGNORE INTO release_environments (release_id, environment, planned_date, deployed_at, note, installed)
-  SELECT release_id, 'accblauw', planned_date, deployed_at, note, installed
+INSERT IGNORE INTO release_environments (release_id, environment, planned_date, deployed_at, installed)
+  SELECT release_id, 'accblauw', planned_date, deployed_at, installed
   FROM release_environments WHERE environment='ACC';
 UPDATE release_environments SET environment='accrood' WHERE environment='ACC';
-INSERT IGNORE INTO release_environments (release_id, environment, planned_date, deployed_at, note, installed)
-  SELECT release_id, 'prodblauw', planned_date, deployed_at, note, installed
+INSERT IGNORE INTO release_environments (release_id, environment, planned_date, deployed_at, installed)
+  SELECT release_id, 'prodblauw', planned_date, deployed_at, installed
   FROM release_environments WHERE environment='PROD';
 UPDATE release_environments SET environment='prodrood' WHERE environment='PROD';
 DELETE FROM release_environments
-  WHERE environment NOT IN ('test2', 'test', 'accrood', 'accblauw', '4eset', 'prodblauw', 'prodrood');
+  WHERE environment NOT IN ('test2', 'test', 'accrood', 'accblauw', '4eset', 'prodblauw', 'prodrood', 'LB 50/50');
 
 -- Example data: rollback text for one of the example releases
 UPDATE releases SET rollback =

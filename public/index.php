@@ -97,6 +97,7 @@ View::header('Overview', 'overview');
       <th>Release</th>
       <th>Application</th>
       <th>Description</th>
+      <th>Planned prodrood</th>
       <th>Status</th>
       <th>Progress</th>
       <th>Responsible</th>
@@ -110,6 +111,15 @@ View::header('Overview', 'overview');
       }
       if (isset($overlaps[$r['id']])) {
           $rowClass .= ' row-overlap';
+      }
+      
+      // Get planned prodrood date
+      $prodroodDate = null;
+      foreach ($r['environments'] as $env) {
+          if ($env['environment'] === 'prodrood' && !empty($env['planned_date'])) {
+              $prodroodDate = $env['planned_date'];
+              break;
+          }
       }
   ?>
     <tr class="<?= trim($rowClass) ?>">
@@ -131,6 +141,9 @@ View::header('Overview', 'overview');
         <span class="app-version"><?= e($r['version']) ?></span>
       </td>
       <td class="desc"><?= e($r['description']) ?></td>
+      <td class="nowrap">
+        <?= e(View::formatDate($prodroodDate)) ?>
+      </td>
       <td>
         <?php 
           $status = $r['highest_status'] ?? ($r['current_environment'] ? $config->environmentLabel($r['current_environment']) : 'Not started');

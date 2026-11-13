@@ -175,8 +175,7 @@
       '<input type="text" class="item-name" name="items[' + maxIndex + '][name]" placeholder="item">' +
       '<input type="checkbox" name="items[' + maxIndex + '][installed]" value="1" title="Installed on this environment">' +
       '<input type="date" name="items[' + maxIndex + '][planned_date]" title="Planned date">' +
-      '<input type="date" name="items[' + maxIndex + '][deployed_at]" title="Deployed date">' +
-      '<input type="text" class="env-note" name="items[' + maxIndex + '][note]" placeholder="note">';
+      '<input type="date" name="items[' + maxIndex + '][deployed_at]" title="Deployed date">';
     list.appendChild(row);
     row.querySelector('.item-name').focus();
   });

@@ -43,31 +43,31 @@ INSERT INTO releases (release_nr, application, version, previous_version, descri
 (690, 'platform', 'nvt', 'nvt', 'Mongo naar 5 full nodes', NULL, NULL, NULL, NULL,
  'Chantal', 'dev-user', NULL, NULL, NULL, 'Chantal');
 
-INSERT INTO release_environments (release_id, environment, planned_date, deployed_at, note, installed, position)
-SELECT r.id, v.environment, v.planned_date, v.deployed_at, v.note, v.installed, v.pos
+INSERT INTO release_environments (release_id, environment, planned_date, deployed_at, installed, position)
+SELECT r.id, v.environment, v.planned_date, v.deployed_at, v.installed, v.pos
 FROM releases r
 JOIN (
-  SELECT 722 AS nr, 'prodblauw' AS environment, '2026-12-09' AS planned_date, NULL AS deployed_at, NULL AS note, 0 AS installed, 60 AS pos UNION ALL
-  SELECT 722, 'prodrood',  '2026-12-09', NULL, NULL, 0, 70 UNION ALL
-  SELECT 722, 'LB 50/50',  '2026-12-09', NULL, NULL, 0, 80 UNION ALL
-  SELECT 721, 'test2',    '2026-11-04', '2026-11-04', NULL, 1, 10 UNION ALL
-  SELECT 721, 'test',     '2026-11-05', '2026-11-05', 'Teruggedraaid naar 10.1.0', 1, 20 UNION ALL
-  SELECT 721, 'accrood',  '2026-11-10', NULL, NULL, 0, 30 UNION ALL
-  SELECT 721, 'accblauw', '2026-11-10', NULL, NULL, 0, 40 UNION ALL
-  SELECT 721, 'prodblauw', '2026-11-12', NULL, NULL, 0, 60 UNION ALL
-  SELECT 721, 'prodrood',  '2026-11-12', NULL, NULL, 0, 70 UNION ALL
-  SELECT 721, 'LB 50/50',  '2026-11-12', NULL, NULL, 0, 80 UNION ALL
-  SELECT 719, 'prodblauw', '2026-11-02', '2026-11-02', NULL, 1, 60 UNION ALL
-  SELECT 719, 'prodrood',  '2026-11-02', '2026-11-02', NULL, 1, 70 UNION ALL
-  SELECT 719, 'LB 50/50',  '2026-11-02', '2026-11-02', NULL, 1, 80 UNION ALL
-  SELECT 718, 'prodblauw', '2026-11-02', '2026-11-02', NULL, 1, 60 UNION ALL
-  SELECT 718, 'prodrood',  '2026-11-02', '2026-11-02', NULL, 1, 70 UNION ALL
-  SELECT 718, 'LB 50/50',  '2026-11-02', '2026-11-02', NULL, 1, 80 UNION ALL
-  SELECT 717, 'prodblauw', '2026-11-09', '2026-11-09', NULL, 1, 60 UNION ALL
-  SELECT 717, 'prodrood',  '2026-11-09', '2026-11-09', NULL, 1, 70 UNION ALL
-  SELECT 717, 'test',     '2026-11-12', '2026-11-12', 'Patch release 717.1', 1, 20 UNION ALL
-  SELECT 717, 'LB 50/50',  '2026-11-09', '2026-11-09', NULL, 1, 80 UNION ALL
-  SELECT 716, 'prodblauw', '2026-10-30', '2026-10-30', NULL, 1, 60 UNION ALL
+  SELECT 722 AS nr, 'prodblauw' AS environment, '2026-12-09' AS planned_date, NULL AS deployed_at, 0 AS installed, 60 AS pos UNION ALL
+  SELECT 722, 'prodrood',  '2026-12-09', NULL, 0, 70 UNION ALL
+  SELECT 722, 'LB 50/50',  '2026-12-09', NULL, 0, 80 UNION ALL
+  SELECT 721, 'test2',    '2026-11-04', '2026-11-04', 1, 10 UNION ALL
+  SELECT 721, 'test',     '2026-11-05', '2026-11-05', 1, 20 UNION ALL
+  SELECT 721, 'accrood',  '2026-11-10', NULL, 0, 30 UNION ALL
+  SELECT 721, 'accblauw', '2026-11-10', NULL, 0, 40 UNION ALL
+  SELECT 721, 'prodblauw', '2026-11-12', NULL, 0, 60 UNION ALL
+  SELECT 721, 'prodrood',  '2026-11-12', NULL, 0, 70 UNION ALL
+  SELECT 721, 'LB 50/50',  '2026-11-12', NULL, 0, 80 UNION ALL
+  SELECT 719, 'prodblauw', '2026-11-02', '2026-11-02', 1, 60 UNION ALL
+  SELECT 719, 'prodrood',  '2026-11-02', '2026-11-02', 1, 70 UNION ALL
+  SELECT 719, 'LB 50/50',  '2026-11-02', '2026-11-02', 1, 80 UNION ALL
+  SELECT 718, 'prodblauw', '2026-11-02', '2026-11-02', 1, 60 UNION ALL
+  SELECT 718, 'prodrood',  '2026-11-02', '2026-11-02', 1, 70 UNION ALL
+  SELECT 718, 'LB 50/50',  '2026-11-02', '2026-11-02', 1, 80 UNION ALL
+  SELECT 717, 'prodblauw', '2026-11-09', '2026-11-09', 1, 60 UNION ALL
+  SELECT 717, 'prodrood',  '2026-11-09', '2026-11-09', 1, 70 UNION ALL
+  SELECT 717, 'test',     '2026-11-12', '2026-11-12', 1, 20 UNION ALL
+  SELECT 717, 'LB 50/50',  '2026-11-09', '2026-11-09', 1, 80 UNION ALL
+  SELECT 716, 'prodblauw', '2026-10-30', '2026-10-30', 1, 60 UNION ALL
   SELECT 716, 'prodrood',  '2026-10-30', '2026-10-30', NULL, 1, 70 UNION ALL
   SELECT 716, 'LB 50/50',  '2026-10-30', '2026-10-30', NULL, 1, 80 UNION ALL
   SELECT 715, 'prodblauw', '2026-11-12', NULL, NULL, 0, 60 UNION ALL

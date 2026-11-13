@@ -16,77 +16,47 @@ $pastReleases = [];
 $futureReleases = [];
 
 foreach ($allReleases as $release) {
-    // Get the planned production date from environments
-    $prodPlannedDate = null;
+    // Get the planned prodblauw date
+    $prodblauwDate = null;
     foreach ($release['environments'] as $env) {
-        if ($config->isProduction($env['environment']) && !empty($env['planned_date'])) {
-            if ($prodPlannedDate === null || $env['planned_date'] < $prodPlannedDate) {
-                $prodPlannedDate = $env['planned_date'];
-            }
+        if ($env['environment'] === 'prodblauw' && !empty($env['planned_date'])) {
+            $prodblauwDate = $env['planned_date'];
+            break;
         }
     }
     
-    if ($prodPlannedDate === null) {
-        // No planned date, put in future
-        $futureReleases[] = $release;
-    } elseif ($prodPlannedDate < $today) {
+    // Only show releases with a planned prodblauw date
+    if ($prodblauwDate === null) {
+        continue;
+    }
+    
+    if ($prodblauwDate < $today) {
         $pastReleases[] = $release;
     } else {
         $futureReleases[] = $release;
     }
 }
 
-// Sort by planned production date
-usort($pastReleases, function($a, $b) use ($config) {
-    $dateA = null;
-    foreach ($a['environments'] as $env) {
-        if ($config->isProduction($env['environment']) && !empty($env['planned_date'])) {
-            if ($dateA === null || $env['planned_date'] > $dateA) {
-                $dateA = $env['planned_date'];
-            }
-        }
-    }
-    $dateB = null;
-    foreach ($b['environments'] as $env) {
-        if ($config->isProduction($env['environment']) && !empty($env['planned_date'])) {
-            if ($dateB === null || $env['planned_date'] > $dateB) {
-                $dateB = $env['planned_date'];
-            }
-        }
-    }
+// Sort by prodblauw planned date
+usort($pastReleases, function($a, $b) {
+    $dateA = getProdblauwDate($a);
+    $dateB = getProdblauwDate($b);
     return $dateB <=> $dateA;
 });
 
-usort($futureReleases, function($a, $b) use ($config) {
-    $dateA = null;
-    foreach ($a['environments'] as $env) {
-        if ($config->isProduction($env['environment']) && !empty($env['planned_date'])) {
-            if ($dateA === null || $env['planned_date'] < $dateA) {
-                $dateA = $env['planned_date'];
-            }
-        }
-    }
-    $dateB = null;
-    foreach ($b['environments'] as $env) {
-        if ($config->isProduction($env['environment']) && !empty($env['planned_date'])) {
-            if ($dateB === null || $env['planned_date'] < $dateB) {
-                $dateB = $env['planned_date'];
-            }
-        }
-    }
+usort($futureReleases, function($a, $b) {
+    $dateA = getProdblauwDate($a);
+    $dateB = getProdblauwDate($b);
     return $dateA <=> $dateB;
 });
 
-function getProdDate(array $release, Config $config): ?string {
-    $date = null;
+function getProdblauwDate(array $release): ?string {
     foreach ($release['environments'] as $env) {
-        if ($config->isProduction($env['environment']) && !empty($env['planned_date'])) {
-            if ($date === null || $env['planned_date'] < $date) {
-                $date = $env['planned_date'];
-            }
+        if ($env['environment'] === 'prodblauw' && !empty($env['planned_date'])) {
+            return $env['planned_date'];
         }
     }
-    return $date;
+    return null;
 }
 
 View::header('Public Releases', 'public', true);
@@ -100,7 +70,7 @@ View::header('Public Releases', 'public', true);
       <h2>Upcoming Releases</h2>
       <div class="releases-list">
         <?php foreach ($futureReleases as $release):
-            $prodDate = getProdDate($release, $config);
+            $prodDate = getProdblauwDate($release);
             $appLabel = $config->applicationLabel($release['application']);
         ?>
         <article class="release-card">
@@ -132,7 +102,7 @@ View::header('Public Releases', 'public', true);
       <h2>Past Releases</h2>
       <div class="releases-list">
         <?php foreach ($pastReleases as $release):
-            $prodDate = getProdDate($release, $config);
+            $prodDate = getProdblauwDate($release);
             $appLabel = $config->applicationLabel($release['application']);
         ?>
         <article class="release-card">

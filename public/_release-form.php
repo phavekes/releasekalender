@@ -103,8 +103,6 @@ $tagDefault = fn(string $field) => $mode !== 'new'
         <?php if ($mode === 'edit'): ?>
           <input type="date" name="items[<?= (int)$i ?>][deployed_at]"
                  value="<?= e($item['deployed_at'] ?? '') ?>" title="Deployed date">
-          <input type="text" name="items[<?= (int)$i ?>][note]" class="env-note"
-                 value="<?= e($item['note'] ?? '') ?>" placeholder="note">
         <?php endif; ?>
       </div>
     <?php endforeach; ?>
