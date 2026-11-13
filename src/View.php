@@ -15,15 +15,21 @@ class View
         return $user['nickname'] ?? ($user['name'] ?? ($user['sub'] ?? ''));
     }
 
-    public static function header(string $title, string $active = ''): void
+    public static function header(string $title, string $active = '', bool $public = false): void
     {
         $user = Auth::user();
+        $homeUrl = $public ? 'public.php' : 'index.php';
         ?><!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><?= e($title) ?> - Release Calendar</title>
+<title><?= e($title) ?> - ReleaseCalendar</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<link rel="mask-icon" href="safari-pinned-tab.svg" color="#2563eb">
 <script>
 (function () {
   var mode = localStorage.getItem('theme') || 'auto';
@@ -38,12 +44,19 @@ class View
 <body>
 <header class="topbar">
   <div class="topbar-inner">
-    <a class="brand" href="index.php">Release<span>Kalender</span></a>
+    <a class="brand" href="<?= e($homeUrl) ?>">ReleaseCalendar</a>
     <nav class="nav">
-      <a href="index.php" class="<?= $active === 'overview' ? 'active' : '' ?>">Overview</a>
-      <a href="new.php" class="<?= $active === 'new' ? 'active' : '' ?>">New release</a>
+      <?php if ($user): ?>
+        <a href="index.php" class="<?= $active === 'overview' ? 'active' : '' ?>">Overview</a>
+        <a href="new.php" class="<?= $active === 'new' ? 'active' : '' ?>">New release</a>
+      <?php else: ?>
+        <a href="public.php" class="<?= $active === 'public' ? 'active' : '' ?>">Public Releases</a>
+      <?php endif; ?>
     </nav>
     <div class="user">
+      <?php if (!$user): ?>
+        <a class="btn btn-primary" href="login.php">Log in</a>
+      <?php endif; ?>
       <button type="button" id="theme-toggle" class="btn btn-ghost theme-toggle"
               aria-label="Switch color theme" title="Color theme: click to cycle Auto / Light / Dark">
         <?= View::themeIcon() ?>
@@ -64,7 +77,7 @@ class View
         ?>
 </main>
 <footer class="footer">
-  <div class="container">Release Calendar - SURF Access</div>
+  <div class="container">ReleaseCalendar - SURF Access</div>
 </footer>
 </body>
 </html>

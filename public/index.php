@@ -5,7 +5,10 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/src/bootstrap.php';
 
 $config = new Config();
-Auth::requireLogin();
+if (!Auth::user()) {
+    header('Location: public.php');
+    exit;
+}
 $releases = new Releases(Database::pdo(), $config);
 $users = (new Users(Database::pdo()))->all();
 
