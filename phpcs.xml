@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="ReleaseCalendar">
+    <rule ref="PSR12"/>
+    
+    <arg name="extensions" value="php"/>
+    <arg name="encoding" value="utf-8"/>
+    <arg name="tab-width" value="4"/>
+    <arg name="severity" value="warning"/>
+    
+    <file>src</file>
+    <file>public</file>
+    
+    <!-- Exclude directories -->
+    <exclude-pattern>public/assets/*</exclude-pattern>
+    <exclude-pattern>public/api/*</exclude-pattern>
+    <exclude-pattern>vendor/*</exclude-pattern>
+    
+    <!-- Custom sniffs -->
+    <arg name="colors" value="0"/>
+</ruleset>

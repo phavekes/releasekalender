@@ -1,0 +1,13 @@
+parameters:
+    level: 5
+    paths:
+        - src
+        - public
+    exclude:
+        - public/assets
+        - public/api
+
+    checkMissingIterableValue: false
+
+includes:
+    - vendor/phpstan/phpstan/conf/bleedingEdge.neon

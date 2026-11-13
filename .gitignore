@@ -27,5 +27,18 @@ config/config.local.php
 !sql/schema.sql
 !sql/seed.sql
 
-# Vendor (if we add composer later)
+# Vendor (composer dependencies)
 /vendor
+
+# PHPUnit cache
+.phpunit.cache/
+.phpunit.result.cache
+
+# PHPStan cache
+.phpstan/
+
+# PHPCS cache
+.phpcs_cache/
+
+# Composer
+composer.lock
