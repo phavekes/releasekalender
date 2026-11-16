@@ -37,9 +37,9 @@ $pdo->exec(file_get_contents(__DIR__ . '/../sql/schema.sql'));
 
 $seed = getenv('SEED_EXAMPLE_DATA');
 if ($seed === '1') {
+    $pdo->exec("USE $name");
     $stmt = $pdo->query("SELECT COUNT(*) FROM $name.releases");
     if ($stmt->fetchColumn() == 0) {
-        $pdo->exec("USE $name");
         $pdo->exec(file_get_contents(__DIR__ . '/../sql/seed.sql'));
         echo "Example data loaded.\n";
     }
