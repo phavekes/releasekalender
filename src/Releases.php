@@ -19,8 +19,15 @@ class Releases
     public function all(): array
     {
         // Use a single query with JOIN for better performance
+        // Explicitly select all release columns and alias env id to avoid
+        // MySQL duplicate column name issue with LEFT JOIN
         $rows = $this->pdo->query(
-            'SELECT r.*, re.* '
+            'SELECT r.id, r.release_nr, r.application, r.version, r.previous_version, '
+            . 'r.description, r.deploy_tag, r.environments_tag, r.dependencies, '
+            . 'r.db_changes, r.testers, r.responsible, r.changelog, r.notes, r.rollback, '
+            . 'r.created_at, r.created_by, '
+            . 're.id as env_id, re.release_id as env_release_id, re.environment, '
+            . 're.planned_date, re.deployed_at, re.installed, re.position '
             . 'FROM releases r '
             . 'LEFT JOIN release_environments re ON re.release_id = r.id '
             . 'ORDER BY r.release_nr DESC, re.position, re.id'
@@ -59,10 +66,10 @@ class Releases
                 ];
             }
 
-            if ($row['release_id'] !== null) {
+            if ($row['env_id'] !== null) {
                 $currentRelease['environments'][] = [
-                    'id' => $row['id'],
-                    'release_id' => $row['release_id'],
+                    'id' => $row['env_id'],
+                    'release_id' => $row['env_release_id'],
                     'environment' => $row['environment'],
                     'planned_date' => $row['planned_date'],
                     'deployed_at' => $row['deployed_at'],
