@@ -24,7 +24,7 @@ class View
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; form-action 'self'; base-uri 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; base-uri 'self'">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title><?= e($title) ?> - <?= e(Constants::APP_NAME) ?></title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
