@@ -44,7 +44,7 @@ session_set_cookie_params([
     'path' => '/',
     'secure' => ($_SERVER['HTTPS'] ?? '') !== '' && ($_SERVER['HTTPS'] ?? '') !== 'off',
     'httponly' => true,
-    'samesite' => 'Strict'
+    'samesite' => 'Lax'
 ]);
 
 if (session_status() !== PHP_SESSION_ACTIVE) {

@@ -41,7 +41,9 @@ class GitHub
         $response = $this->httpClient->get($url, $headers);
 
         if ($response === null) {
-            error_log('GitHub API: Failed to fetch releases for ' . $owner . '/' . $repo);
+            $errorMsg = 'GitHub API: Failed to fetch releases for ' . $owner . '/' . $repo;
+            error_log($errorMsg);
+            fwrite(STDERR, $errorMsg . PHP_EOL);
             return null;
         }
 
