@@ -13,7 +13,7 @@ $name = getenv('DB_NAME') ?: 'releasekalender';
 $user = getenv('DB_USER') ?: 'releasekalender';
 $pass = getenv('DB_PASS') ?: 'releasekalender';
 
-$waitForDb = function () use ($host, $port, $user, $pass) {
+$waitForDb = function () use ($host, $port, $user, $pass, $name) {
     for ($i = 0; $i < 60; $i++) {
         try {
             $pdo = new PDO(
@@ -22,8 +22,11 @@ $waitForDb = function () use ($host, $port, $user, $pass) {
                 $pass,
                 [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
             );
+            // Also verify we can access the database
+            $pdo->query("USE $name");
             return $pdo;
         } catch (PDOException $e) {
+            fwrite(STDERR, "Database connection attempt $i failed: " . $e->getMessage() . "\n");
             sleep(1);
         }
     }

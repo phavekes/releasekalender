@@ -24,7 +24,7 @@ if [ -f /var/www/html/docker/apache-rewrite.conf ]; then
 fi
 
 echo "Waiting for MariaDB..."
-php /var/www/html/sql/init-db.php
+php /var/www/html/sql/init-db.php || exit 1
 
 # Hand off to the OpenConext base container entrypoint (APACHE_UID etc.)
 exec /entrypoint.sh "$@"
