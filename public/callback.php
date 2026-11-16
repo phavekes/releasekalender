@@ -6,4 +6,11 @@ require_once dirname(__DIR__) . '/src/bootstrap.php';
 
 $config = new Config();
 Auth::checkRateLimit();
-Auth::handleCallbackStatic($config);
+
+try {
+    Auth::handleCallbackStatic($config);
+} catch (Throwable $e) {
+    error_log("OIDC callback error: " . $e->getMessage());
+    header('Location: /login?error=1');
+    exit;
+}
