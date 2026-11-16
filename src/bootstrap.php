@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+// Start output buffering to prevent accidental output before headers
+ob_start();
+
 // Error reporting
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
@@ -128,3 +131,8 @@ function rateLimit(string $key, int $maxAttempts = 5, int $windowSeconds = 60): 
     $_SESSION[$sessionKey]['attempts']++;
     return true;
 }
+
+// Flush output buffer at the end
+register_shutdown_function(function () {
+    ob_end_flush();
+});
