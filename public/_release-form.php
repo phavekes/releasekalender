@@ -91,19 +91,18 @@ $tagDefault = fn(string $field) => $mode !== 'new'
   <div class="env-list" id="plan-items">
     <?php foreach ($planItems as $i => $item): ?>
       <div class="env-row env-row-edit plan-item" data-index="<?= (int)$i ?>">
+        <span class="drag-handle" title="Drag to reorder" draggable="true">
+          <svg viewBox="0 0 16 16" width="12" height="12" stroke="currentColor" stroke-width="1.5" fill="none" aria-hidden="true"><path d="M5 4h1M5 8h7M5 12h7"/></svg>
+        </span>
+        <input type="checkbox" name="items[<?= (int)$i ?>][installed]" value="1"
+               <?= !empty($item['installed']) ? 'checked' : '' ?> title="Installed on this environment">
+        <input type="text" name="items[<?= (int)$i ?>][name]" class="item-name"
+               value="<?= e($item['environment']) ?>" placeholder="item">
+        <input type="date" name="items[<?= (int)$i ?>][planned_date]"
+               value="<?= e($item['planned_date'] ?? '') ?>" title="Planned date">
         <button type="button" class="btn btn-ghost item-delete" title="Remove item">
           <svg viewBox="0 0 16 16" width="12" height="12" stroke="currentColor" stroke-width="1.8" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>
         </button>
-        <input type="text" name="items[<?= (int)$i ?>][name]" class="item-name"
-               value="<?= e($item['environment']) ?>" placeholder="item">
-        <input type="checkbox" name="items[<?= (int)$i ?>][installed]" value="1"
-               <?= !empty($item['installed']) ? 'checked' : '' ?> title="Installed on this environment">
-        <input type="date" name="items[<?= (int)$i ?>][planned_date]"
-               value="<?= e($item['planned_date'] ?? '') ?>" title="Planned date">
-        <?php if ($mode === 'edit'): ?>
-          <input type="date" name="items[<?= (int)$i ?>][deployed_at]"
-                 value="<?= e($item['deployed_at'] ?? '') ?>" title="Deployed date">
-        <?php endif; ?>
       </div>
     <?php endforeach; ?>
   </div>

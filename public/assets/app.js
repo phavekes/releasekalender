@@ -134,7 +134,7 @@
       deploy_tag: deployTag ? deployTag.value : '',
       environments_tag: envTag ? envTag.value : ''
     });
-    fetch('api/workflow.php?' + params.toString())
+    fetch('/api/workflow?' + params.toString())
       .then(function (r) { return r.json(); })
       .then(function (data) { render(data.steps || []); })
       .catch(function () {
@@ -152,10 +152,13 @@
   if (appSelect && appSelect.value) load();
 })();
 
-/* Auto-save when checkboxes are toggled on release detail page. */
+/* Auto-save and drag-and-drop for planned-date items on release detail page. */
 (function () {
   var form = document.querySelector('.release-form');
-  if (!form) return;
+  var list = document.getElementById('plan-items');
+  var addBtn = document.getElementById('item-add');
+  
+  if (!form || !list || !addBtn) return;
 
   // Create flash message element if it doesn't exist
   var flash = document.querySelector('.flash');
@@ -171,62 +174,177 @@
     }
   }
 
+  var X_ICON = '<svg viewBox="0 0 16 16" width="12" height="12" stroke="currentColor" stroke-width="1.8" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
+  var DRAG_ICON = '<svg viewBox="0 0 16 16" width="12" height="12" stroke="currentColor" stroke-width="1.5" fill="none" aria-hidden="true"><path d="M5 4h1M5 8h7M5 12h7"/></svg>';
+
+  // Debounce function to prevent too many rapid saves
+  var saveTimeout = null;
+  var isSaving = false;
+
+  function triggerSave() {
+    if (isSaving) return;
+    
+    isSaving = true;
+    clearTimeout(saveTimeout);
+    
+    // Collect form data
+    var formData = new FormData(form);
+    
+    // Submit via AJAX
+    fetch(form.action, {
+      method: 'POST',
+      body: formData
+    })
+      .then(function (response) {
+        if (response.ok) {
+          // Show a flash message
+          flash.textContent = 'Changes saved.';
+          flash.style.display = 'block';
+          setTimeout(function () {
+            flash.style.display = 'none';
+          }, 3000);
+        } else {
+          console.error('Failed to save changes');
+        }
+      })
+      .catch(function (error) {
+        console.error('Error:', error);
+      })
+      .finally(function () {
+        isSaving = false;
+      });
+  }
+
+  // Auto-save on change for items (checkboxes, dates, names)
   form.addEventListener('change', function (event) {
     var target = event.target;
-    // Only auto-save for installed checkboxes
-    if (target.name && target.name.match(/items\[\d+\]\[installed\]/)) {
-      event.preventDefault();
-      // Collect form data
-      var formData = new FormData(form);
-      
-      // Submit via AJAX
-      fetch(form.action, {
-        method: 'POST',
-        body: formData
-      })
-        .then(function (response) {
-          if (response.ok) {
-            // Show a flash message
-            flash.textContent = 'Changes saved.';
-            flash.style.display = 'block';
-            setTimeout(function () {
-              flash.style.display = 'none';
-            }, 3000);
-          } else {
-            console.error('Failed to save changes');
-          }
-        })
-        .catch(function (error) {
-          console.error('Error:', error);
-        });
+    // Auto-save for all item fields: installed checkbox, name text, planned_date
+    if (target.name && target.name.match(/items\[\d+\]\[(installed|name|planned_date)\]/)) {
+      // Use debounce to prevent rapid saves
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(triggerSave, 500);
     }
   });
-})();
 
-/* Planned-date items: rows can be added and removed. The server saves the
-   items in list order; within a release names must be unique. */
-(function () {
-  var list = document.getElementById('plan-items');
-  var addBtn = document.getElementById('item-add');
-  if (!list || !addBtn) return;
-
-  var X_ICON = '<svg viewBox="0 0 16 16" width="12" height="12" stroke="currentColor" stroke-width="1.8" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
-  var maxIndex = -1;
-  list.querySelectorAll('.plan-item').forEach(function (row) {
-    maxIndex = Math.max(maxIndex, parseInt(row.dataset.index || '0', 10));
+  // Drag and drop reordering
+  list.addEventListener('dragstart', function (event) {
+    // Check if dragging started from a drag handle (either span or svg inside it)
+    var dragHandle = event.target.closest('.drag-handle');
+    var dragged = event.target.closest('.plan-item');
+    if (!dragHandle || !dragged) return;
+    
+    dragged.classList.add('dragging');
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', dragged.dataset.index);
   });
 
+  list.addEventListener('dragend', function (event) {
+    var dragged = event.target.closest('.plan-item');
+    if (!dragged) return;
+    dragged.classList.remove('dragging');
+    // Trigger save after reordering
+    triggerSave();
+  });
+
+  list.addEventListener('dragenter', function (event) {
+    event.preventDefault();
+    var target = event.target.closest('.plan-item');
+    if (!target || target.classList.contains('dragging')) return;
+    target.classList.add('drag-over');
+  });
+
+  list.addEventListener('dragover', function (event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    var target = event.target.closest('.plan-item');
+    if (!target || target.classList.contains('dragging')) return;
+    target.classList.add('drag-over');
+  });
+
+  list.addEventListener('dragleave', function (event) {
+    var target = event.target.closest('.plan-item');
+    if (target) target.classList.remove('drag-over');
+  });
+
+  list.addEventListener('drop', function (event) {
+    event.preventDefault();
+    
+    // Remove all drag-over classes
+    list.querySelectorAll('.plan-item').forEach(function (item) {
+      item.classList.remove('drag-over');
+    });
+    
+    var dragged = list.querySelector('.plan-item.dragging');
+    if (!dragged) return;
+    
+    // Find the drop position
+    var target = event.target.closest('.plan-item');
+    var rects = Array.from(list.querySelectorAll('.plan-item:not(.dragging)')).map(function (item) {
+      return item.getBoundingClientRect();
+    });
+    
+    var y = event.clientY;
+    var dropIndex = 0;
+    
+    // Find which item to drop before/after
+    for (var i = 0; i < rects.length; i++) {
+      var rect = rects[i];
+      if (y < rect.top + rect.height / 2) {
+        dropIndex = i;
+        break;
+      }
+      dropIndex = i + 1;
+    }
+    
+    // Remove dragging class before reinserting
+    dragged.classList.remove('dragging');
+    
+    // Reinsert at the new position
+    var allItems = Array.from(list.querySelectorAll('.plan-item'));
+    var draggedIndex = allItems.indexOf(dragged);
+    
+    if (dropIndex > draggedIndex) {
+      dropIndex--; // Adjust because we're removing the dragged item
+    }
+    
+    // Insert at the drop position
+    if (dropIndex >= allItems.length) {
+      list.appendChild(dragged);
+    } else {
+      list.insertBefore(dragged, allItems[dropIndex]);
+    }
+    
+    // Update the data-index attributes and input names to match the new order
+    reindexItems();
+  });
+
+  function reindexItems() {
+    var allItems = list.querySelectorAll('.plan-item');
+    allItems.forEach(function (item, index) {
+      item.dataset.index = index;
+      // Update the input names to use the new index
+      var inputs = item.querySelectorAll('input');
+      inputs.forEach(function (input) {
+        var name = input.name;
+        if (name && name.match(/items\[\d+\]/)) {
+          input.name = name.replace(/items\[\d+\]/, 'items[' + index + ']');
+        }
+      });
+    });
+  }
+
   addBtn.addEventListener('click', function () {
-    maxIndex++;
+    var maxIndex = list.querySelectorAll('.plan-item').length;
     var row = document.createElement('div');
     row.className = 'env-row env-row-edit plan-item';
     row.dataset.index = maxIndex;
+    row.draggable = true;
     row.innerHTML =
-      '<button type="button" class="btn btn-ghost item-delete" title="Remove item">' + X_ICON + '</button>' +
-      '<input type="text" class="item-name" name="items[' + maxIndex + '][name]" placeholder="item">' +
+      '<span class="drag-handle" title="Drag to reorder">' + DRAG_ICON + '</span>' +
       '<input type="checkbox" name="items[' + maxIndex + '][installed]" value="1" title="Installed on this environment">' +
+      '<input type="text" class="item-name" name="items[' + maxIndex + '][name]" placeholder="item">' +
       '<input type="date" name="items[' + maxIndex + '][planned_date]" title="Planned date">' +
-      '<input type="date" name="items[' + maxIndex + '][deployed_at]" title="Deployed date">';
+      '<button type="button" class="btn btn-ghost item-delete" title="Remove item">' + X_ICON + '</button>';
     list.appendChild(row);
     row.querySelector('.item-name').focus();
   });
@@ -235,6 +353,9 @@
     var btn = event.target.closest('button.item-delete');
     if (!btn) return;
     btn.closest('.plan-item').remove();
+    // After deletion, reindex and save
+    reindexItems();
+    triggerSave();
   });
 })();
 
@@ -269,8 +390,16 @@
       return;
     }
     setStatus('Loading releases from GitHub...');
-    fetch('api/github-releases.php?app=' + encodeURIComponent(app))
-      .then(function (r) { return r.json(); })
+    fetch('/api/github-releases?app=' + encodeURIComponent(app))
+      .then(function (r) {
+        if (!r.ok) {
+          // Try to get error message from response
+          return r.text().then(function (text) {
+            throw new Error(text || 'HTTP ' + r.status);
+          });
+        }
+        return r.json();
+      })
       .then(function (data) {
         if (app !== appSelect.value) return;
         render(data);

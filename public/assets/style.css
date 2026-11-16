@@ -284,6 +284,28 @@ textarea { resize: vertical; }
 .plan-item input[type="date"] { width: auto; padding: 0.2rem 0.35rem; font-size: 0.85rem; flex-shrink: 0; }
 #item-add { margin-top: 0.4rem; }
 
+/* Drag and drop for plan items */
+.plan-item.dragging {
+  opacity: 0.5;
+  background: var(--surface-2);
+}
+.plan-item.drag-over {
+  border-top: 2px solid var(--accent);
+}
+.plan-item .drag-handle {
+  cursor: grab;
+  padding: 0.2rem 0.4rem;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.plan-item .drag-handle:active {
+  cursor: grabbing;
+}
+.plan-item .drag-handle svg {
+  pointer-events: none;
+}
+
 .env-field { grid-template-columns: auto auto 1fr 1fr; }
 .env-field .env-installed { width: auto; margin-right: 0.4rem; }
 .env-field {
