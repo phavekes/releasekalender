@@ -3,6 +3,8 @@ set -e
 
 # Make the application writable by the Apache user
 chown -R www-data:www-data /var/www/html
+# Ensure files are readable by Apache
+chmod -R a+rX /var/www/html
 
 # Install composer dependencies
 if [ -f /var/www/html/composer.json ]; then

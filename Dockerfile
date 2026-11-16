@@ -4,6 +4,11 @@ FROM ghcr.io/openconext/openconext-basecontainers/php85-apache2:latest
 
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
+# Install zip extension and unzip for Composer dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends unzip libzip-dev && \
+    docker-php-ext-install zip && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Point Apache at the public/ docroot (default site config uses /var/www/html)
 RUN set -eux; \
     sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' \
