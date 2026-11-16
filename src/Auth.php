@@ -212,7 +212,12 @@ class Auth
             return $oidc['redirect_uri'];
         }
         // Use /callback (without .php) for clean URLs
-        return $config->baseUrl() . '/callback';
+        // Force HTTPS for redirect URI
+        $baseUrl = $config->baseUrl();
+        if (str_starts_with($baseUrl, 'http://')) {
+            $baseUrl = 'https://' . substr($baseUrl, 7);
+        }
+        return $baseUrl . '/callback';
     }
 
     /**
