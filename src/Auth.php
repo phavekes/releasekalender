@@ -211,7 +211,8 @@ class Auth
         if (($oidc['redirect_uri'] ?? '') !== '') {
             return $oidc['redirect_uri'];
         }
-        return $config->baseUrl() . '/callback.php';
+        // Use /callback (without .php) for clean URLs
+        return $config->baseUrl() . '/callback';
     }
 
     /**
