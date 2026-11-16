@@ -59,7 +59,7 @@ function getProdblauwDate(array $release): ?string {
     return null;
 }
 
-View::header('Public Releases', 'public', true);
+View::header('Public Releases', 'public', true, $config);
 ?>
 
 <?php if (empty($pastReleases) && empty($futureReleases)): ?>

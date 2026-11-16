@@ -52,7 +52,7 @@ function filterLink(string $label, string $value, string $current, array $params
     return '<a class="' . $class . '" href="/?' . e(http_build_query($query)) . '">' . e($label) . '</a>';
 }
 
-View::header('Overview', 'overview');
+View::header('Overview', 'overview', false, $config);
 ?>
 <div class="page-head">
   <h1>Releases</h1>

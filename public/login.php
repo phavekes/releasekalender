@@ -16,7 +16,7 @@ if (isset($_POST['oidc'])) {
     Auth::startLoginStatic($config);
 }
 
-View::header('Log in');
+View::header('Log in', '', false, $config);
 ?>
 <div class="login-card">
   <h1>Release Calendar</h1>

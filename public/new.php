@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $nextNr = $releases->nextReleaseNr();
 
-View::header('New release', 'new');
+View::header('New release', 'new', false, $config);
 ?>
 <div class="page-head">
   <h1>New release</h1>
