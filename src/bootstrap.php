@@ -20,14 +20,25 @@ set_exception_handler(function ($e) {
 });
 
 // Content Security Policy header
-header("Content-Security-Policy: default-src 'self'; " .
+$csp = "default-src 'self'; " .
     "script-src 'self' 'unsafe-inline'; " .
     "style-src 'self' 'unsafe-inline'; " .
     "img-src 'self' data:; " .
     "font-src 'self'; " .
-    "form-action 'self'; " .
     "frame-ancestors 'none'; " .
-    "base-uri 'self'");
+    "base-uri 'self'";
+
+// Add OIDC URL to form-action if configured
+$configFile = dirname(__DIR__) . '/config/config.php';
+if (file_exists($configFile)) {
+    $config = require $configFile;
+    $csp .= " form-action 'self' ";
+    if (!empty($config['oidc']['url'])) {
+        $csp .= $config['oidc']['url'];
+    }
+}
+
+header("Content-Security-Policy: " . $csp);
 
 // XSS Protection
 header("X-XSS-Protection: 1; mode=block");

@@ -33,7 +33,7 @@ $release = $id ? $releases->find($id) : null;
 
 if (!$release) {
     http_response_code(404);
-    View::header('Not found', '', false, $config);
+    View::header('Not found');
     echo '<p class="error">Release not found.</p>';
     View::footer();
     exit;
@@ -41,7 +41,7 @@ if (!$release) {
 
 $githubUrl = $config->githubReleasesUrl($release['application']);
 
-View::header('Release ' . $release['release_nr'], 'overview', false, $config);
+View::header('Release ' . $release['release_nr'], 'overview');
 ?>
 <div class="page-head">
   <div>
