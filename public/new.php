@@ -11,7 +11,7 @@ $releases = new Releases(Database::pdoStatic(), $config);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Auth::verifyCsrf();
     $release = $releases->save($_POST, $_POST['items'] ?? []);
-    header('Location: release.php?id=' . $release . '&saved=1');
+    header('Location: /release?id=' . $release . '&saved=1');
     exit;
 }
 
@@ -30,7 +30,7 @@ View::header('New release', 'new');
         include __DIR__ . '/_release-form.php'; ?>
   <div class="form-actions">
     <button type="submit" class="btn btn-primary">Add release</button>
-    <a class="btn btn-ghost" href="index.php">Cancel</a>
+    <a class="btn btn-ghost" href="/">Cancel</a>
   </div>
 </form>
 <?php

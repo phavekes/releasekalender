@@ -39,7 +39,7 @@ class Auth
     public static function requireLogin(): void
     {
         if (self::user() === null) {
-            header('Location: login.php');
+            header('Location: /login');
             exit;
         }
     }
@@ -86,7 +86,8 @@ class Auth
         ];
         self::registerLogin();
         Csrf::regenerate(); // Prevent session fixation
-        header('Location: index.php');
+        session_write_close();
+        header('Location: /');
         exit;
     }
 
@@ -184,7 +185,8 @@ class Auth
               $_SESSION['oidc_verifier']);
         OIDCDiscovery::clearCache();
         Csrf::regenerate();
-        header('Location: index.php');
+        session_write_close();
+        header('Location: /');
         exit;
     }
 
@@ -200,7 +202,7 @@ class Auth
     {
         $_SESSION = [];
         session_destroy();
-        header('Location: login.php');
+        header('Location: /login');
         exit;
     }
 

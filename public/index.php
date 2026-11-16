@@ -6,7 +6,7 @@ require_once dirname(__DIR__) . '/src/bootstrap.php';
 
 $config = new Config();
 if (!Auth::user()) {
-    header('Location: public.php');
+    header('Location: /public');
     exit;
 }
 $releases = new Releases(Database::pdoStatic(), $config);
@@ -49,14 +49,14 @@ function filterLink(string $label, string $value, string $current, array $params
 {
     $query = array_merge($params, ['filter' => $value]);
     $class = 'chip' . ($current === $value ? ' chip-active' : '');
-    return '<a class="' . $class . '" href="index.php?' . e(http_build_query($query)) . '">' . e($label) . '</a>';
+    return '<a class="' . $class . '" href="/?' . e(http_build_query($query)) . '">' . e($label) . '</a>';
 }
 
 View::header('Overview', 'overview');
 ?>
 <div class="page-head">
   <h1>Releases</h1>
-  <a class="btn btn-primary" href="new.php">New release</a>
+  <a class="btn btn-primary" href="/new">New release</a>
 </div>
 
 <form method="get" class="filters-form" action="index.php">
@@ -127,7 +127,7 @@ View::header('Overview', 'overview');
   ?>
     <tr class="<?= trim($rowClass) ?>">
       <td class="nowrap">
-        <a class="release-nr" href="release.php?id=<?= (int)$r['id'] ?>">Release <?= (int)$r['release_nr'] ?></a>
+        <a class="release-nr" href="/release?id=<?= (int)$r['id'] ?>">Release <?= (int)$r['release_nr'] ?></a>
         <?php if (isset($overlaps[$r['id']]) || ($r['behind'] && !$r['done'])): ?>
           <div class="badge-row">
             <?php if ($r['behind'] && !$r['done']): ?>

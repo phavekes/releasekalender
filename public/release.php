@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
     $releases->save($_POST, $_POST['items'] ?? [], $id);
-    header('Location: release.php?id=' . $id . '&saved=1');
+    header('Location: /release?id=' . $id . '&saved=1');
     exit;
 }
 
@@ -79,7 +79,7 @@ View::header('Release ' . $release['release_nr'], 'overview');
   <?php $mode = 'edit'; include __DIR__ . '/_release-form.php'; ?>
   <div class="form-actions">
     <button type="submit" class="btn btn-primary">Save changes</button>
-    <a class="btn btn-ghost" href="index.php">Back to overview</a>
+    <a class="btn btn-ghost" href="/">Back to overview</a>
     <button type="submit" name="delete" value="1" class="btn btn-danger"
             onclick="return confirm('Delete release <?= (int)$release['release_nr'] ?>?')">Delete</button>
   </div>

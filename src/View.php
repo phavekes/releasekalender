@@ -18,13 +18,13 @@ class View
     public static function header(string $title, string $active = '', bool $public = false): void
     {
         $user = Auth::user();
-        $homeUrl = $public ? 'public.php' : 'index.php';
+        $homeUrl = $public ? '/public' : '/';
         ?><!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; form-action 'self'; base-uri 'self'">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title><?= e($title) ?> - <?= e(Constants::APP_NAME) ?></title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -49,14 +49,14 @@ class View
     <a class="brand" href="<?= e($homeUrl) ?>"><?= e(Constants::APP_NAME) ?></a>
     <nav class="nav">
       <?php if ($user): ?>
-        <a href="index.php" class="<?= $active === 'overview' ? 'active' : '' ?>">Overview</a>
+        <a href="/" class="<?= $active === 'overview' ? 'active' : '' ?>">Overview</a>
       <?php else: ?>
-        <a href="public.php" class="<?= $active === 'public' ? 'active' : '' ?>">Public Releases</a>
+        <a href="/public" class="<?= $active === 'public' ? 'active' : '' ?>">Public Releases</a>
       <?php endif; ?>
     </nav>
     <div class="user">
       <?php if (!$user): ?>
-        <a class="btn btn-primary" href="login.php">Log in</a>
+        <a class="btn btn-primary" href="/login">Log in</a>
       <?php endif; ?>
       <button type="button" id="theme-toggle" class="btn btn-ghost theme-toggle"
               aria-label="Switch color theme" title="Color theme: click to cycle Auto / Light / Dark">
@@ -64,7 +64,7 @@ class View
       </button>
       <?php if ($user): ?>
         <span class="user-name"><?= e(self::displayName($user)) ?></span>
-        <a class="btn btn-ghost" href="logout.php">Log out</a>
+        <a class="btn btn-ghost" href="/logout">Log out</a>
       <?php endif; ?>
     </div>
   </div>
