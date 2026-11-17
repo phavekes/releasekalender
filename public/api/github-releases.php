@@ -6,7 +6,8 @@ require_once dirname(__DIR__, 2) . '/src/bootstrap.php';
 
 $config = new Config();
 $releases = new Releases(Database::pdoStatic(), $config);
-$github = new GitHub($config->githubToken());
+$httpClient = new HttpClient();
+$github = new GitHub($config->githubToken(), $httpClient);
 
 $app = $_GET['app'] ?? '';
 if (!isset($config->applications()[$app])) {

@@ -138,7 +138,21 @@ class JwtValidator
                 throw new InvalidArgumentException('Cannot decode JWT signature.');
             }
 
+            // Debug: Check if PEM is valid
+            error_log('Trying key with kid: ' . ($key['kid'] ?? 'none'));
+            $testKey = @openssl_pkey_get_public($pem);
+            if ($testKey === false) {
+                error_log('PEM validation failed: ' . openssl_error_string());
+                error_log('PEM: ' . substr($pem, 0, 100));
+            } else {
+                error_log('PEM validation OK for kid: ' . ($key['kid'] ?? 'none'));
+                openssl_pkey_free($testKey);
+            }
+
             $result = openssl_verify($signingInput, $signature, $pem, OPENSSL_ALGO_SHA256);
+            if ($result !== 1) {
+                error_log('openssl_verify result: ' . $result . ', error: ' . openssl_error_string());
+            }
             if ($result === 1) {
                 return;
             }
@@ -199,14 +213,18 @@ class JwtValidator
             throw new InvalidArgumentException('Cannot decode exponent.');
         }
 
-        $rsaPublicKey = self::derSequence(self::derInteger($modulus) . self::derInteger($exponent));
-        $algorithm = pack('H*', '300d06092a86486f70d0101010500'); // SEQ { OID rsaEncryption, NULL }
-        $body = $algorithm . "\x03" . chr(strlen($rsaPublicKey) + 1) . "\x00" . $rsaPublicKey;
-        $der = self::derSequence($body);
+        // Build the RSA public key as a BIT STRING
+        $rsaKeySeq = self::derSequence(self::derInteger($modulus) . self::derInteger($exponent));
+        
+        // Build the SubjectPublicKeyInfo: SEQUENCE { algorithm AlgorithmIdentifier, subjectPublicKey BIT STRING }
+        // AlgorithmIdentifier for rsaEncryption is: SEQUENCE { OID rsaEncryption, NULL }
+        $algorithmIdentifier = pack('H*', '300d06092a864886f70d0101010500'); // OID + NULL
+        $bitString = "\x03" . self::derLength(strlen($rsaKeySeq) + 1) . "\x00" . $rsaKeySeq;
+        $subjectPublicKeyInfo = self::derSequence($algorithmIdentifier . $bitString);
 
         return "-----BEGIN PUBLIC KEY-----\n"
-            . chunk_split(base64_encode($der), 64)
-            . "-----END PUBLIC KEY-----";
+            . base64_encode($subjectPublicKeyInfo)
+            . "\n-----END PUBLIC KEY-----";
     }
 
     /**

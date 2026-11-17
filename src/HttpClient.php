@@ -94,12 +94,10 @@ class HttpClient
         if ($response === false) {
             $error = curl_error($ch);
             error_log("HttpClient: cURL error for $url: $error");
-            curl_close($ch);
             return null;
         }
 
         $status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        curl_close($ch);
 
         if ($status < 200 || $status >= 300) {
             error_log("HttpClient: HTTP $status for $url");
@@ -142,7 +140,6 @@ class HttpClient
 
         curl_exec($ch);
         $status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        curl_close($ch);
 
         return $status ?: -1;
     }

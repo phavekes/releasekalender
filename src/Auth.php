@@ -128,6 +128,14 @@ class Auth
                 hash('sha256', $_SESSION['oidc_verifier'], true)
             ),
             'code_challenge_method' => 'S256',
+            'claims' => json_encode([
+                'id_token' => [
+                    'name' => ['essential' => true],
+                    'nickname' => ['essential' => true],
+                    'preferred_username' => ['essential' => true],
+                    'email' => ['essential' => true],
+                ],
+            ]),
         ];
         header('Location: ' . $discovery['authorization_endpoint'] . '?' . http_build_query($params));
         exit;
@@ -175,8 +183,8 @@ class Auth
 
         $_SESSION['user'] = [
             'sub' => $token['sub'],
-            'nickname' => $token['nickname']
-                ?? ($token['preferred_username'] ?? ($token['name'] ?? $token['sub'])),
+            'nickname' => $token['nickname'] ?? '',
+            'preferred_username' => $token['preferred_username'] ?? '',
             'name' => $token['name'] ?? null,
             'email' => $token['email'] ?? '',
         ];
@@ -258,12 +266,10 @@ class Auth
         $response = curl_exec($ch);
         if ($response === false) {
             $error = curl_error($ch);
-            curl_close($ch);
             throw new RuntimeException('cURL error during token exchange: ' . $error);
         }
 
         $status = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        curl_close($ch);
 
         if ($status !== 200) {
             error_log("OIDC token exchange failed with HTTP $status: $response");

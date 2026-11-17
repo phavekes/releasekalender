@@ -12,7 +12,8 @@ class View
         if (!$user) {
             return '';
         }
-        return $user['nickname'] ?? ($user['name'] ?? ($user['sub'] ?? ''));
+        // Use preferred_username first, then nickname, then name, then sub
+        return $user['preferred_username'] ?? ($user['nickname'] ?? ($user['name'] ?? ($user['sub'] ?? '')));
     }
 
     public static function header(string $title, string $active = '', bool $public = false): void
