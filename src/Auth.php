@@ -245,7 +245,7 @@ class Auth
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POSTFIELDS => http_build_query([
-                'grant_type' => 'code',
+                'grant_type' => 'authorization_code',
                 'code' => $code,
                 'client_id' => $oidc['client_id'],
                 'client_secret' => $oidc['client_secret'],
